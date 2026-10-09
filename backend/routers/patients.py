@@ -11,10 +11,12 @@ from backend.db import session
 from backend.nlp.lexicon import Concept, Lexicon, get_lexicon
 from backend.record import entries as record
 from backend.record import qr
+from backend.record.fhir import build_bundle
 from backend.schemas import (
     Allergy,
     CommitEntryRequest,
     ConditionRef,
+    FhirBundle,
     GenericRef,
     InlineNote,
     PatientDetail,
@@ -323,3 +325,17 @@ def get_patient_qr_image(patient_id: str) -> Response:
         encodes = f"sanchai://p/{patient['qr_token']}"
         png_bytes = qr.encode_png_bytes(encodes)
         return Response(content=png_bytes, media_type="image/png")
+
+
+@router.get("/patients/{patient_id}/fhir", response_model=FhirBundle)
+def get_patient_fhir(patient_id: str) -> FhirBundle:
+    """Generate HL7 FHIR R4 Collection Bundle strictly excluding negated findings."""
+    lexicon = get_lexicon()
+    with session() as con:
+        patient = record.get_patient(con, patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+        allergies = record.list_allergies(con, patient_id)
+        raw_entries = record.list_entries(con, patient_id)
+        entries = [(row, record.hydrate(row["normalized_json"], lexicon)) for row in raw_entries]
+        return build_bundle(patient, allergies, entries)

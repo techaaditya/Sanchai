@@ -83,5 +83,22 @@
   - `pytest tests/test_qr.py`: 4 passed in 0.64s.
   - Full test suite (`pytest`): 18 passed in 4.17s.
   - Verified genuine PNG bytes generation with `\x89PNG\r\n\x1a\n` header.
-- **Commit:** (Pending)
+- **Commit:** `a899370`
 - **Next Task:** Increment 6: FHIR R4 interoperability bundle export strictly excluding negated findings (`backend/record/fhir.py` and `GET /api/v1/patients/{id}/fhir`).
+
+---
+
+### Increment 6: FHIR R4 Export with Strict Negation Exclusion
+- **Status:** COMPLETED & VERIFIED
+- **Changes:**
+  - Implemented `backend/record/fhir.py` generating HL7 FHIR R4 collection bundles with `Patient`, `AllergyIntolerance`, `Condition`, `MedicationRequest`, and `Observation` resources.
+  - Enforced critical clinical safety rule: strictly excluded negated findings from `Condition` resources to prevent inverting clinical records in external health systems.
+  - Tracked `negated_excluded` count on bundle payload for transparent clinical auditing.
+  - Implemented `GET /api/v1/patients/{id}/fhir` endpoint returning valid `FhirBundle`.
+  - Added unit and safety tests in `tests/test_fhir.py`.
+- **Verification:**
+  - `pytest tests/test_fhir.py`: 3 passed in 0.56s.
+  - Full test suite (`pytest`): 21 passed in 2.14s.
+  - Verified `negated_excluded >= 1` and confirmed no negated conditions appear in exported resources.
+- **Commit:** (Pending)
+- **Next Task:** Increment 7: Comprehensive end-to-end integration tests (`tests/test_integration_flow.py`).
