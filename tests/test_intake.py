@@ -135,6 +135,16 @@ def test_oversized_content_length_rejected_before_parsing(client, monkeypatch):
     }
 
 
+def test_intake_stream_rejects_oversized_text(client):
+    """The streaming route must enforce the same text cap as /intake/text."""
+    response = client.post(
+        "/api/v1/intake/stream",
+        data={"text": "ज्वरो " * 5000, "use_model": "false"},  # 25k chars > 20k cap
+    )
+    assert response.status_code == 422
+    assert "20000" in response.json()["detail"]
+
+
 def test_intake_image_offline_resilience(client):
     # Dummy PNG bytes
     dummy_png = (

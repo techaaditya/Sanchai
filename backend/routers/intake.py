@@ -37,6 +37,9 @@ DOCUMENT_CLASSES = {CLASS_PRESCRIPTION, CLASS_LAB_REPORT, CLASS_BILL, CLASS_NOTE
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 READ_CHUNK_BYTES = 1024 * 1024
 SIZE_EXCEEDED_DETAIL = f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+# Mirrors IntakeRequest.text max_length so the streaming route enforces the
+# same cap as /intake/text instead of accepting unbounded text.
+MAX_TEXT_CHARS = 20000
 
 
 def _validate_hint(hint: str | None) -> str | None:
@@ -154,6 +157,11 @@ async def intake_stream(
     """Streamed intake returning Server-Sent Events (SSE) across extraction, correction, and normalization."""
     if file is None and not (text or "").strip():
         raise HTTPException(status_code=422, detail="Provide either an uploaded file or text.")
+    if text is not None and len(text) > MAX_TEXT_CHARS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"text must be at most {MAX_TEXT_CHARS} characters",
+        )
 
     upload = await _read_upload(file) if file is not None else None
     events = run_intake(
