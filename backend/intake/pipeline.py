@@ -173,37 +173,53 @@ def run_intake(
         try:
             pdf = extract_pdf_text(upload.data)
             pages = pdf.pages
+        except Exception as exc:
+            # Corrupted/unsupported file content — the AI engine was never
+            # involved, so do not claim engine_unavailable or direct method.
+            extraction_method = METHOD_UNAVAILABLE
+            extraction_status = STATUS_UNSUPPORTED
+            notes.append(
+                Note(
+                    level="error",
+                    message_np=f"पीडीएफ पढ्न सकिएन: {str(exc)}",
+                    message_en=f"Unsupported or corrupted PDF: {str(exc)}",
+                )
+            )
+        else:
             if pdf.is_digital:
                 raw_transcript = pdf.text
                 extraction_method = METHOD_PYMUPDF
                 extraction_status = STATUS_OK
             else:
                 # Scanned PDF: rasterize first page for vision OCR
-                image_bytes = render_pdf_page(upload.data, page_number=0)
-                extracted = ai_engine.transcribe_image(image_bytes) if use_model else None
-                if extracted:
-                    raw_transcript = extracted
-                    extraction_method = METHOD_GEMMA4_VLM
-                    extraction_status = STATUS_OK
-                else:
+                try:
+                    image_bytes = render_pdf_page(upload.data, page_number=0)
+                except Exception as exc:
                     extraction_method = METHOD_UNAVAILABLE
-                    extraction_status = STATUS_ENGINE_UNAVAILABLE
+                    extraction_status = STATUS_UNSUPPORTED
                     notes.append(
                         Note(
-                            level="warning",
-                            message_np="स्क्यान गरिएको पीडीएफ पढ्न AI भिजन उपलब्ध भएन।",
-                            message_en="AI vision model unavailable to read scanned PDF.",
+                            level="error",
+                            message_np=f"पीडीएफ पृष्ठ रूपान्तरण असफल: {str(exc)}",
+                            message_en=f"Unsupported or corrupted PDF page: {str(exc)}",
                         )
                     )
-        except Exception as exc:
-            extraction_status = STATUS_ENGINE_UNAVAILABLE
-            notes.append(
-                Note(
-                    level="error",
-                    message_np=f"पीडीएफ प्रशोधनमा त्रुटि: {str(exc)}",
-                    message_en=f"PDF extraction error: {str(exc)}",
-                )
-            )
+                else:
+                    extracted = ai_engine.transcribe_image(image_bytes) if use_model else None
+                    if extracted:
+                        raw_transcript = extracted
+                        extraction_method = METHOD_GEMMA4_VLM
+                        extraction_status = STATUS_OK
+                    else:
+                        extraction_method = METHOD_UNAVAILABLE
+                        extraction_status = STATUS_ENGINE_UNAVAILABLE
+                        notes.append(
+                            Note(
+                                level="warning",
+                                message_np="स्क्यान गरिएको पीडीएफ पढ्न AI भिजन उपलब्ध भएन।",
+                                message_en="AI vision model unavailable to read scanned PDF.",
+                            )
+                        )
 
     elif input_type == INPUT_IMAGE and upload is not None:
         if use_model:

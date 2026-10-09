@@ -73,6 +73,25 @@ def test_intake_pdf_digital(client):
     assert len(resp_data["normalized"]["concepts"]) >= 1
 
 
+def test_intake_malformed_pdf_reports_unsupported(client):
+    """Corrupted PDF bytes must report 'unsupported', not falsely claim the AI engine is down."""
+    garbage = b"%PDF-1.4 " + b"\x00garbage-bytes" * 200
+
+    response = client.post(
+        "/api/v1/intake/ocr",
+        files={"file": ("corrupt.pdf", garbage, "application/pdf")},
+        data={"use_model": "false", "correct": "true"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["input_type"] == "pdf"
+    assert data["extraction_status"] == "unsupported"
+    assert data["extraction_method"] == "unavailable"
+    assert data["raw_transcript"] == ""
+    assert data["normalized"] is None
+    assert any(n["level"] == "error" for n in data["notes"])
+
+
 def test_intake_image_offline_resilience(client):
     # Dummy PNG bytes
     dummy_png = (
