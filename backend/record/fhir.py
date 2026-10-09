@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Iterable, Sequence
 
 from backend.record.entries import StoredNormalization
 from backend.schemas import FhirBundle
 
+logger = logging.getLogger("sanchai.backend.fhir")
+
 SYSTEM_ICD11 = "http://id.who.int/icd/release/11/mms"
 SYSTEM_ICD10 = "http://hl7.org/fhir/sid/icd-10"
 SYSTEM_LEXICON = "urn:sanchai:nepali-clinical-lexicon"
+SYSTEM_FHIR_EVENT = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
 
 RESOURCE_FOR_TYPE = {
     "condition": "Condition",
@@ -16,6 +20,16 @@ RESOURCE_FOR_TYPE = {
     "drug_generic": "MedicationRequest",
     "drug_brand": "MedicationRequest",
 }
+
+
+def _fhir_safe_id(internal_id: str) -> str:
+    """Convert an internal database ID to a FHIR R4-compliant resource ID.
+
+    FHIR R4 requires resource IDs to match ``^[A-Za-z0-9\\-.]+$``.  Internal
+    database IDs use underscores (e.g. ``patient_ram``) which are invalid, so
+    underscores are replaced with hyphens.
+    """
+    return internal_id.replace("_", "-")
 
 
 def _codeable(concept: Any) -> dict[str, Any]:
@@ -55,7 +69,7 @@ def _patient_resource(patient: Any) -> dict[str, Any]:
 
     resource: dict[str, Any] = {
         "resourceType": "Patient",
-        "id": patient["id"],
+        "id": _fhir_safe_id(patient["id"]),
         "identifier": identifiers,
         "name": [{"text": patient["name_np"] or patient["name"]}],
     }
@@ -67,16 +81,25 @@ def _patient_resource(patient: Any) -> dict[str, Any]:
 
 
 def _allergy_resources(patient_id: str, allergies: Sequence[Any]) -> list[dict[str, Any]]:
+    fhir_patient_id = _fhir_safe_id(patient_id)
     return [
         {
             "resourceType": "AllergyIntolerance",
-            "id": row["id"],
-            "patient": {"reference": f"Patient/{patient_id}"},
+            "id": _fhir_safe_id(row["id"]),
+            "patient": {"reference": f"Patient/{fhir_patient_id}"},
             "clinicalStatus": {
                 "coding": [
                     {
                         "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
                         "code": "active",
+                    }
+                ]
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification-status",
+                        "code": "confirmed",
                     }
                 ]
             },
@@ -98,7 +121,7 @@ def _clinical_resources(
     patient_id: str, row: Any, normalization: StoredNormalization
 ) -> list[dict[str, Any]]:
     resources: list[dict[str, Any]] = []
-    reference = {"reference": f"Patient/{patient_id}"}
+    fhir_patient_ref = f"Patient/{_fhir_safe_id(patient_id)}"
 
     for index, item in enumerate(normalization.concepts):
         # Strict clinical safety rule: negated findings are never emitted as condition resources!
@@ -109,32 +132,52 @@ def _clinical_resources(
         if resource_type is None:
             continue
 
-        base: dict[str, Any] = {
-            "resourceType": resource_type,
-            "id": f"{row['id']}-{index}",
-            "subject": reference,
-        }
+        entry_id = _fhir_safe_id(f"{row['id']}-{index}")
+        codeable = _codeable(item.concept)
 
         if resource_type == "Condition":
-            base["code"] = _codeable(item.concept)
-            base["recordedDate"] = row["record_date"]
-            base["verificationStatus"] = {
-                "coding": [
-                    {
-                        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
-                        "code": "unconfirmed",
-                    }
-                ]
+            base: dict[str, Any] = {
+                "resourceType": "Condition",
+                "id": entry_id,
+                "subject": {"reference": fhir_patient_ref},
+                "code": codeable,
+                "clinicalStatus": {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                            "code": "active",
+                        }
+                    ]
+                },
+                "verificationStatus": {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                            "code": "unconfirmed",
+                        }
+                    ]
+                },
+                "recordedDate": row["record_date"],
             }
         elif resource_type == "Observation":
-            base["code"] = _codeable(item.concept)
-            base["effectiveDateTime"] = row["record_date"]
-            base["status"] = "registered"
+            base = {
+                "resourceType": "Observation",
+                "id": entry_id,
+                "subject": {"reference": fhir_patient_ref},
+                "code": codeable,
+                "status": "final",
+                "effectiveDateTime": row["record_date"],
+            }
         else:
-            base["medicationCodeableConcept"] = _codeable(item.concept)
-            base["authoredOn"] = row["record_date"]
-            base["status"] = "unknown"
-            base["intent"] = "order"
+            base = {
+                "resourceType": "MedicationRequest",
+                "id": entry_id,
+                "subject": {"reference": fhir_patient_ref},
+                "medication": {"concept": codeable},
+                "status": "active",
+                "intent": "order",
+                "authoredOn": row["record_date"],
+            }
             if normalization.duration_days or normalization.frequency_per_day:
                 timing: dict[str, Any] = {}
                 if normalization.frequency_per_day:
@@ -151,12 +194,36 @@ def _clinical_resources(
     return resources
 
 
+def validate_bundle(bundle_dict: dict[str, Any]) -> None:
+    """Validate the FHIR R4 bundle against the ``fhir.resources`` R4 model.
+
+    Raises ``ValidationError`` if any resource in the bundle is structurally
+    invalid.  This is a development-time safety net: if validation fails it
+    indicates a bug in ``_patient_resource`` / ``_clinical_resources`` /
+    ``_allergy_resources``.
+    """
+    from fhir.resources.bundle import Bundle
+    from pydantic import ValidationError
+
+    try:
+        Bundle(**bundle_dict)
+    except ValidationError:
+        logger.error("FHIR bundle validation failed; see ValidationError below")
+        raise
+
+
 def build_bundle(
     patient: Any,
     allergies: Sequence[Any],
     entries: Iterable[tuple[Any, StoredNormalization]],
 ) -> FhirBundle:
-    """Assemble HL7 FHIR R4 Collection Bundle strictly excluding negated concepts."""
+    """Assemble HL7 FHIR R4 Collection Bundle strictly excluding negated concepts.
+
+    Every generated resource is structurally validated against the installed
+    ``fhir.resources`` R4 model before the bundle is returned, ensuring
+    resource IDs, required fields, and reference targets comply with the spec.
+    """
+    patient_id = _fhir_safe_id(patient["id"])
     resources: list[dict[str, Any]] = [_patient_resource(patient)]
     resources.extend(_allergy_resources(patient["id"], allergies))
 
@@ -165,10 +232,18 @@ def build_bundle(
         excluded += sum(1 for item in normalization.concepts if item.negated)
         resources.extend(_clinical_resources(patient["id"], row, normalization))
 
+    bundle_dict = {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{"resource": r} for r in resources],
+    }
+
+    validate_bundle(bundle_dict)
+
     return FhirBundle(
         resourceType="Bundle",
         type="collection",
-        entry=[{"resource": r} for r in resources],
+        entry=bundle_dict["entry"],
         negated_excluded=excluded,
         synthetic=True,
     )

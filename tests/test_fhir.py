@@ -1,6 +1,11 @@
+import re
+
 import pytest
 from fastapi.testclient import TestClient
+
 from backend.main import app
+
+FHIR_ID_PATTERN = re.compile(r"^[A-Za-z0-9\-\.]+$")
 
 
 @pytest.fixture
@@ -24,15 +29,81 @@ def test_get_patient_fhir_bundle(client):
     assert "Patient" in resource_types
     assert "AllergyIntolerance" in resource_types
 
-    # Find patient resource
-    patient_res = next(e["resource"] for e in data["entry"] if e["resource"]["resourceType"] == "Patient")
-    assert patient_res["id"] == "patient_ram"
+    # Every resource id must be FHIR R4 compliant (no underscores)
+    for entry in data["entry"]:
+        assert FHIR_ID_PATTERN.match(entry["resource"]["id"]), (
+            f"FHIR resource id '{entry['resource']['id']}' violates R4 ID pattern"
+        )
+
+    # Find patient resource — ID is FHIR-safe (hyphenated)
+    patient_res = next(
+        e["resource"] for e in data["entry"] if e["resource"]["resourceType"] == "Patient"
+    )
+    assert patient_res["id"] == "patient-ram"
     identifiers = [ident["value"] for ident in patient_res["identifier"]]
     assert any("SANCHAI-" in v or "AK-" in v for v in identifiers)
 
     # Find allergy resource
-    allergy_res = next(e["resource"] for e in data["entry"] if e["resource"]["resourceType"] == "AllergyIntolerance")
+    allergy_res = next(
+        e["resource"] for e in data["entry"] if e["resource"]["resourceType"] == "AllergyIntolerance"
+    )
     assert "Penicillin" in allergy_res["code"]["text"]
+
+
+def test_fhir_validates_against_model(client):
+    """Every resource in the bundle must pass fhir.resources R4 validation."""
+    from fhir.resources.bundle import Bundle
+    from pydantic import ValidationError
+
+    response = client.get("/api/v1/patients/patient_ram/fhir")
+    assert response.status_code == 200
+    data = response.json()
+
+    bundle_dict = {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": data["entry"],
+    }
+
+    # Should not raise — if it does, the bundle is structurally invalid FHIR R4
+    bundle = Bundle(**bundle_dict)
+    assert bundle.type == "collection"
+    assert len(bundle.entry) >= 3
+
+
+def test_fhir_resource_structure(client):
+    """Verify FHIR resource fields are structurally correct."""
+    response = client.get("/api/v1/patients/patient_ram/fhir")
+    assert response.status_code == 200
+    data = response.json()
+
+    for entry in data["entry"]:
+        res = entry["resource"]
+        if res["resourceType"] == "Condition":
+            # clinicalStatus is required in FHIR R4
+            assert "clinicalStatus" in res
+            coding = res["clinicalStatus"]["coding"][0]
+            assert coding["code"] == "active"
+        elif res["resourceType"] == "MedicationRequest":
+            # medication must use CodeableReference, not medicationCodeableConcept
+            assert "medication" in res
+            assert "medicationCodeableConcept" not in res
+            assert res["medication"]["concept"]["coding"][0]["code"]
+            assert res["status"] == "active"
+            assert res["intent"] == "order"
+        elif res["resourceType"] == "Observation":
+            assert res["status"] == "final"
+
+    # Patient references in all resources must use FHIR-safe (hyphenated) ID
+    patient_res = next(
+        e["resource"] for e in data["entry"] if e["resource"]["resourceType"] == "Patient"
+    )
+    for entry in data["entry"]:
+        res = entry["resource"]
+        ref_field = "patient" if res.get("resourceType") == "AllergyIntolerance" else "subject"
+        if ref_field in res:
+            ref = res[ref_field]["reference"]
+            assert ref == f"Patient/{patient_res['id']}"
 
 
 def test_fhir_strictly_excludes_negated_findings(client):
