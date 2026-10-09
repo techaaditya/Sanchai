@@ -12,6 +12,7 @@ from backend.nlp.lexicon import Concept, Lexicon, get_lexicon
 from backend.record import entries as record
 from backend.record import qr
 from backend.record.fhir import build_bundle
+from backend.routers.intake import DOCUMENT_CLASSES
 from backend.schemas import (
     Allergy,
     CommitEntryRequest,
@@ -29,6 +30,11 @@ from backend.schemas import (
 )
 
 router = APIRouter(tags=["record"])
+
+# Documented input modalities (CommitEntryRequest.input_type description and
+# PROJECT_DIRECTIVES §2 — voice input is de-scoped). Enforced at the write
+# gate so unvalidated values never enter the authoritative record.
+ALLOWED_INPUT_TYPES = frozenset({"text", "image", "pdf"})
 
 
 def _age(dob: str | None, on: dt.date | None = None) -> int | None:
@@ -242,6 +248,16 @@ def get_entry(patient_id: str, entry_id: str) -> RecordEntryDetail:
 def commit_entry(patient_id: str, payload: CommitEntryRequest) -> RecordEntryDetail:
     """Approval-Before-Write gate: the only endpoint that mutates patient health records."""
     _require_gregorian(payload.record_date, "record_date")
+    if payload.input_type not in ALLOWED_INPUT_TYPES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"input_type must be one of {sorted(ALLOWED_INPUT_TYPES)}",
+        )
+    if payload.document_class is not None and payload.document_class not in DOCUMENT_CLASSES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"document_class must be one of {sorted(DOCUMENT_CLASSES)}",
+        )
     lexicon = get_lexicon()
 
     with session() as con:

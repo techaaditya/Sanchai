@@ -109,3 +109,41 @@ def test_invalid_patient_or_date(client):
     }
     res_422 = client.post("/api/v1/patients/patient_ram/entries", json=invalid_date_payload)
     assert res_422.status_code == 422
+
+
+def test_commit_rejects_invalid_input_type_and_document_class(client):
+    """The approval gate must enforce the documented input_type and
+    document_class values so unvalidated strings never reach the record."""
+    base = {
+        "record_date": "2026-10-09",
+        "normalized": {"text": "test", "prepared_text": "test", "concepts": []},
+    }
+    before = len(client.get("/api/v1/patients/patient_maya/record").json()["entries"])
+
+    # input_type outside {text, image, pdf} -> 422 (voice is de-scoped)
+    res = client.post(
+        "/api/v1/patients/patient_maya/entries",
+        json={**base, "input_type": "voice"},
+    )
+    assert res.status_code == 422
+    assert "input_type" in res.json()["detail"]
+
+    # unknown document_class -> 422
+    res = client.post(
+        "/api/v1/patients/patient_maya/entries",
+        json={**base, "input_type": "text", "document_class": "receipt"},
+    )
+    assert res.status_code == 422
+    assert "document_class" in res.json()["detail"]
+
+    # Rejected requests must not have mutated the record
+    after = len(client.get("/api/v1/patients/patient_maya/record").json()["entries"])
+    assert after == before
+
+    # A documented value still commits normally
+    res = client.post(
+        "/api/v1/patients/patient_maya/entries",
+        json={**base, "input_type": "text", "document_class": "note"},
+    )
+    assert res.status_code == 201
+    assert res.json()["document_class"] == "note"
