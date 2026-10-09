@@ -35,6 +35,8 @@ logger = logging.getLogger("sanchai.intake")
 
 DOCUMENT_CLASSES = {CLASS_PRESCRIPTION, CLASS_LAB_REPORT, CLASS_BILL, CLASS_NOTE}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+READ_CHUNK_BYTES = 1024 * 1024
+SIZE_EXCEEDED_DETAIL = f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
 
 
 def _validate_hint(hint: str | None) -> str | None:
@@ -49,14 +51,24 @@ def _validate_hint(hint: str | None) -> str | None:
 
 
 async def _read_upload(file: UploadFile) -> Upload:
-    data = await file.read()
+    # Reject on the parsed size before materialising the body in memory.
+    if file.size is not None and file.size > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=SIZE_EXCEEDED_DETAIL)
+    # Fall back to a bounded chunked read for unknown sizes: abort as soon as
+    # the limit is crossed instead of buffering the whole upload first.
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=SIZE_EXCEEDED_DETAIL)
+        chunks.append(chunk)
+    data = b"".join(chunks)
     if not data:
         raise HTTPException(status_code=422, detail="Uploaded file is empty.")
-    if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit.",
-        )
     return Upload(
         data=data,
         mime_type=file.content_type or "application/octet-stream",

@@ -8,6 +8,7 @@ from pathlib import Path
 import httpx
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from backend.config import settings
 
@@ -65,6 +66,30 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Reject oversized request bodies from the Content-Length header before the
+# multipart/JSON parser buffers them.  Slack covers multipart framing overhead
+# so a file exactly at the limit is still accepted.  Registered BEFORE
+# CORSMiddleware so CORS stays outermost and decorates this 413 response.
+REQUEST_BODY_LIMIT_BYTES = intake_router.MAX_UPLOAD_BYTES + 1024 * 1024
+
+
+@app.middleware("http")
+async def reject_oversized_request_body(request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length is not None and content_length.isdigit():
+        if int(content_length) > REQUEST_BODY_LIMIT_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "detail": (
+                        f"Request body exceeds "
+                        f"{REQUEST_BODY_LIMIT_BYTES // (1024 * 1024)} MB limit."
+                    )
+                },
+            )
+    return await call_next(request)
+
 
 app.add_middleware(
     CORSMiddleware,

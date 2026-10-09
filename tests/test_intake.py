@@ -92,6 +92,49 @@ def test_intake_malformed_pdf_reports_unsupported(client):
     assert any(n["level"] == "error" for n in data["notes"])
 
 
+def test_upload_too_large_returns_413(client, monkeypatch):
+    """An upload beyond the size cap must be rejected without processing."""
+    monkeypatch.setattr("backend.routers.intake.MAX_UPLOAD_BYTES", 1024)
+    payload = b"%PDF-1.4 " + b"A" * 4096
+
+    response = client.post(
+        "/api/v1/intake/ocr",
+        files={"file": ("big.pdf", payload, "application/pdf")},
+        data={"use_model": "false"},
+    )
+    assert response.status_code == 413
+    assert "exceeds" in response.json()["detail"]
+
+
+def test_empty_upload_returns_422(client):
+    response = client.post(
+        "/api/v1/intake/ocr",
+        files={"file": ("empty.pdf", b"", "application/pdf")},
+        data={"use_model": "false"},
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Uploaded file is empty."
+
+
+def test_oversized_content_length_rejected_before_parsing(client, monkeypatch):
+    """The Content-Length gate rejects oversized bodies before form parsing,
+    and the 413 still carries CORS headers (CORS must wrap the gate)."""
+    monkeypatch.setattr("backend.main.REQUEST_BODY_LIMIT_BYTES", 10)
+
+    response = client.post(
+        "/api/v1/intake/text",
+        json={"text": "ज्वरो आएको छ", "use_model": False},
+        headers={"origin": "http://localhost:3000"},
+    )
+    assert response.status_code == 413
+    assert "exceeds" in response.json()["detail"]
+    # CORS must be outermost so browsers can read the 413
+    assert response.headers.get("access-control-allow-origin") in {
+        "http://localhost:3000",
+        "*",
+    }
+
+
 def test_intake_image_offline_resilience(client):
     # Dummy PNG bytes
     dummy_png = (
