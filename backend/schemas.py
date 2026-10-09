@@ -161,13 +161,13 @@ class IntakeRequest(BaseModel):
 
 
 class IntakeResponse(BaseModel):
-    raw_transcript: str = Field(description="Verbatim extraction from voice/vision/document")
+    raw_transcript: str = Field(description="Verbatim extraction from vision/document")
     corrected_text: str
     extraction_method: str = Field(
-        description="pymupdf | gemma4_vlm | gemma4_audio | direct | unavailable"
+        description="pymupdf | gemma4_vlm | direct | unavailable"
     )
     extraction_status: str = Field(description="ok | engine_unavailable | empty | unsupported")
-    input_type: str = Field(description="text | image | pdf | voice")
+    input_type: str = Field(description="text | image | pdf")
     document_class: str = Field(description="prescription | lab_report | bill | note")
     document_class_evidence: list[str] = Field(default_factory=list)
     corrections: list[CorrectionOut] = Field(default_factory=list)
@@ -270,7 +270,7 @@ class RecordEntryDetail(RecordEntrySummary):
 
 class CommitEntryRequest(BaseModel):
     """Approval-Before-Write gate request model."""
-    input_type: str = Field(description="text | image | pdf | voice")
+    input_type: str = Field(description="text | image | pdf")
     record_date: str = Field(description="Gregorian ISO-8601 (YYYY-MM-DD)")
     normalized: NormalizeResponse
     document_class: str | None = None

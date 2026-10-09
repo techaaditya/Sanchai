@@ -17,7 +17,6 @@ def load_prompt(name: str) -> str:
 
 # Cached prompt templates
 OCR_TRANSCRIBE_PROMPT = load_prompt("ocr_transcribe.txt")
-AUDIO_TRANSCRIBE_PROMPT = load_prompt("audio_transcribe.txt")
 TIER3_MATCH_PROMPT = load_prompt("tier3_match.txt")
 ASSISTANT_SYSTEM_PROMPT = load_prompt("assistant_system.txt")
 SUMMARY_NARRATIVE_PROMPT = load_prompt("summary_narrative.txt")

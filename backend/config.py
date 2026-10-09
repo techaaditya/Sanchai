@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     """Runtime configuration for ArogyaKhata backend.
 
     Values are resolved from the environment and optional .env file.
+    Core Architecture Decision:
+    - Primary Model: gemma4:31b-cloud via Ollama
+    - Input modalities: Vision OCR (prescriptions & reports), Digital PDFs, and Text.
+      (Voice input is strictly de-scoped for future development).
     """
 
     model_config = SettingsConfigDict(
@@ -18,22 +22,17 @@ class Settings(BaseSettings):
     )
 
     port: int = 8000
-    model_backend: str = "auto"  # "local", "cloud", "llamacpp", or "auto"
+    model_backend: str = "cloud"  # "cloud", "local", or "auto"
 
-    # Local Gemma 4 E2B Multimodal inference (Ollama or llama.cpp)
-    ollama_url: str = "http://localhost:11434"
-    local_gemma_model: str = "google/gemma-4-E2B-it"
-    gemma_model: str = "google/gemma-4-E2B-it"
-
-    # Cloud fallback (Google AI Studio / Ollama Cloud / Gemini)
+    # Primary Cloud Model: gemma4:31b-cloud (Ollama)
     ollama_cloud_url: str = "https://ollama.com"
-    fallback_model: str = "gemma4:31b-cloud"
+    model_name: str = "gemma4:31b-cloud"
     gemma_cloud_model: str = "gemma4:31b-cloud"
     ollama_api_key: str = ""
 
-    # llama.cpp server endpoint for multimodal GGUF
-    llama_cpp_url: str = "http://localhost:8081"
-    llama_cpp_model: str = "google/gemma-4-E2B-it"
+    # Local Ollama URL (fallback or offline development)
+    ollama_url: str = "http://localhost:11434"
+    local_gemma_model: str = "gemma4:31b-cloud"
 
     # Database & Data asset paths
     db_path: str = "./data/arogyakhata.db"
@@ -50,9 +49,9 @@ class Settings(BaseSettings):
 
     @property
     def resolved_backend(self) -> str:
-        """Determines active model backend based on environment and availability."""
+        """Determines active model backend based on key presence and explicit setting."""
         choice = self.model_backend.strip().lower()
-        if choice in {"cloud", "local", "llamacpp"}:
+        if choice in {"cloud", "local"}:
             return choice
         return "cloud" if self.ollama_api_key.strip() else "local"
 
@@ -60,17 +59,11 @@ class Settings(BaseSettings):
     def model_base_url(self) -> str:
         if self.resolved_backend == "cloud":
             return self.ollama_cloud_url.rstrip("/")
-        if self.resolved_backend == "llamacpp":
-            return self.llama_cpp_url.rstrip("/")
         return self.ollama_url.rstrip("/")
 
     @property
     def active_model_name(self) -> str:
-        if self.resolved_backend == "cloud":
-            return self.fallback_model or self.gemma_cloud_model
-        if self.resolved_backend == "llamacpp":
-            return self.llama_cpp_model
-        return self.local_gemma_model or self.gemma_model
+        return self.model_name or self.gemma_cloud_model
 
     @property
     def model_headers(self) -> dict[str, str]:
