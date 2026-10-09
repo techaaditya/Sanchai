@@ -142,3 +142,65 @@ export type RecordEntryDetail = RecordEntrySummary & {
   notes: InlineNote[];
   normalized?: NormalizeResponse | null;
 };
+
+export type CategoryRow = {
+  category: string;
+  total: number;
+  exact: number;
+  accuracy: number;
+};
+
+export type ItemRow = {
+  item_id: number;
+  category: string;
+  derivation: string;
+  input: string;
+  gold_present: string[];
+  gold_negated: string[];
+  predicted_present: string[];
+  predicted_negated: string[];
+  tier_fired: number | null;
+  correct: boolean;
+  missed: string[];
+  spurious: string[];
+};
+
+export type EvalRunResponse = {
+  run_id: string;
+  created_at: string;
+  use_model: boolean;
+  persisted: boolean;
+  total: number;
+  exact: number;
+  accuracy: number;
+  negation_total: number;
+  negation_correct: number;
+  duration_total: number;
+  duration_correct: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  tier_counts: Record<string, number>;
+  tier_precision: Record<string, number | null>;
+  model_share: number;
+  by_category: CategoryRow[];
+  brand_items: number;
+  brand_resolved: number;
+  derivation_counts: Record<string, number>;
+  caveats: string[];
+  items: ItemRow[];
+};
+
+export type QrPayload = {
+  sanchai_id: string;
+  arogya_id?: string | null;
+  qr_token: string;
+  name: string;
+  name_np?: string | null;
+  blood_group?: string | null;
+  allergies: string[];
+  conditions: string[];
+  synthetic: boolean;
+  qr_png?: string | null;
+  encodes?: string | null;
+};

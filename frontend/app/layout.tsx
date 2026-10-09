@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { NavHeader } from "@/components/nav-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sanchai",
-  description: "A grounded Nepali clinical intake and record workflow."
+  title: "Sanchai (सञ्चै) — Clinical Health Ledger",
+  description: "Zero-hallucination bilingual Nepali clinical intake and longitudinal health ledger."
 };
 
 export default function RootLayout({
@@ -14,7 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NavHeader />
+        {children}
+      </body>
     </html>
   );
-}
+}

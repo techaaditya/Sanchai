@@ -1,5 +1,12 @@
-import type { IntakeResponse, PatientDetail, RecordEntrySummary } from "@/lib/contracts";
-import type { RecordEntryDetail } from "@/lib/contracts";
+import type {
+  EvalRunResponse,
+  IntakeResponse,
+  PatientDetail,
+  PatientSummary,
+  QrPayload,
+  RecordEntryDetail,
+  RecordEntrySummary,
+} from "@/lib/contracts";
 
 type DashboardPayload = {
   patient: PatientDetail;
@@ -9,7 +16,7 @@ type DashboardPayload = {
 
 const FALLBACK_API_BASE_URL = "http://localhost:8000";
 
-function getApiBaseUrl() {
+export function getApiBaseUrl() {
   const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
   return configured || FALLBACK_API_BASE_URL;
 }
@@ -26,10 +33,11 @@ async function safeJson<T>(response: Response): Promise<T | null> {
   }
 }
 
-async function fetchJson<T>(path: string): Promise<T | null> {
+async function fetchJson<T>(path: string, options?: RequestInit): Promise<T | null> {
   try {
     const response = await fetch(`${getApiBaseUrl()}${path}`, {
-      cache: "no-store"
+      cache: "no-store",
+      ...options,
     });
     return await safeJson<T>(response);
   } catch {
@@ -37,18 +45,72 @@ async function fetchJson<T>(path: string): Promise<T | null> {
   }
 }
 
+export async function fetchHealth(): Promise<{ status: string; service: string; model: string } | null> {
+  return fetchJson("/api/v1/health");
+}
+
 export async function fetchDashboardData(): Promise<DashboardPayload | null> {
   return fetchJson<DashboardPayload>("/api/v1/dashboard");
+}
+
+export async function fetchPatients(): Promise<PatientSummary[] | null> {
+  return fetchJson<PatientSummary[]>("/api/v1/patients");
 }
 
 export async function fetchPatientById(id: string): Promise<PatientDetail | null> {
   return fetchJson<PatientDetail>(`/api/v1/patients/${id}`);
 }
 
-export async function fetchPatientTimeline(id: string): Promise<RecordEntrySummary[] | null> {
-  return fetchJson<RecordEntrySummary[]>(`/api/v1/patients/${id}/entries`);
+export async function fetchPatientRecord(
+  id: string
+): Promise<{ patient: PatientDetail; entries: RecordEntrySummary[] } | null> {
+  return fetchJson<{ patient: PatientDetail; entries: RecordEntrySummary[] }>(`/api/v1/patients/${id}/record`);
 }
 
-export async function fetchEntryById(id: string): Promise<RecordEntryDetail | null> {
-  return fetchJson<RecordEntryDetail>(`/api/v1/entries/${id}`);
+export async function fetchPatientTimeline(id: string): Promise<RecordEntrySummary[] | null> {
+  const record = await fetchPatientRecord(id);
+  return record ? record.entries : null;
 }
+
+export async function fetchEntryById(patientId: string, entryId: string): Promise<RecordEntryDetail | null> {
+  return fetchJson<RecordEntryDetail>(`/api/v1/patients/${patientId}/entries/${entryId}`);
+}
+
+export async function fetchPatientQr(id: string): Promise<QrPayload | null> {
+  return fetchJson<QrPayload>(`/api/v1/patients/${id}/qr`);
+}
+
+export async function postIntakeText(text: string, useModel = false, correct = true): Promise<IntakeResponse | null> {
+  return fetchJson<IntakeResponse>("/api/v1/intake/text", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, use_model: useModel, correct }),
+  });
+}
+
+export async function postCommitEntry(
+  patientId: string,
+  payload: Record<string, unknown>
+): Promise<RecordEntryDetail | null> {
+  return fetchJson<RecordEntryDetail>(`/api/v1/patients/${patientId}/entries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchLatestEval(): Promise<EvalRunResponse | null> {
+  return fetchJson<EvalRunResponse>("/api/v1/eval/latest");
+}
+
+export async function runLiveEval(useModel = false, limit?: number): Promise<EvalRunResponse | null> {
+  return fetchJson<EvalRunResponse>("/api/v1/eval/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ use_model: useModel, persist: true, limit }),
+  });
+}
+
+export async function fetchEvalRuns(): Promise<Array<{ run_id: string; created_at: string; total: number; exact: number }> | null> {
+  return fetchJson<Array<{ run_id: string; created_at: string; total: number; exact: number }>>("/api/v1/eval/runs");
+}

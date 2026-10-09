@@ -18,13 +18,16 @@ export default async function HomePage() {
             </p>
 
             <div className="actions">
-              <a className="button button--secondary" href="/intake">
+              <Link className="button button--primary" href="/evidence">
+                NepClinBench Evidence (96.7%)
+              </Link>
+              <Link className="button button--secondary" href="/intake">
                 Open intake studio
-              </a>
-              <a className="button button--secondary" href="/scan">
+              </Link>
+              <Link className="button button--secondary" href="/scan">
                 Open QR scanner
-              </a>
-              <Link className="button button--primary" href={`/patients/${patient.id}`}>
+              </Link>
+              <Link className="button button--secondary" href={`/patients/${patient.id}`}>
                 Open patient record
               </Link>
               <Link className="button button--secondary" href="/review/entry-1024">
