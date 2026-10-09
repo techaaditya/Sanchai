@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { loadPatientData } from "@/lib/frontend-data";
 
@@ -42,6 +43,12 @@ export default async function PatientPage({ params }: PatientPageProps) {
               <span className="metric__label">Approval gate</span>
               <div className="metric__value">Required</div>
             </article>
+          </div>
+
+          <div className="actions" style={{ marginTop: 24 }}>
+            <Link className="button button--primary" href={`/emergency/${patient.qr_token}`}>
+              Open emergency summary
+            </Link>
           </div>
         </div>
       </section>

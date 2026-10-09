@@ -24,6 +24,9 @@ export default async function HomePage() {
               <Link className="button button--secondary" href="/review/entry-1024">
                 Open approval screen
               </Link>
+              <Link className="button button--secondary" href={`/emergency/${patient.qr_token}`}>
+                Open emergency summary
+              </Link>
               <a className="button button--secondary" href="#review-queue">
                 Open review queue
               </a>

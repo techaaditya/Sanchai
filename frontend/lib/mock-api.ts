@@ -209,6 +209,30 @@ export async function getPatientOverview() {
   };
 }
 
+export function getEmergencySummary() {
+  return {
+    patient,
+    qrPayload: {
+      sanchai_id: patient.sanchai_id,
+      arogya_id: patient.arogya_id,
+      qr_token: patient.qr_token,
+      name: patient.name,
+      name_np: patient.name_np,
+      blood_group: patient.blood_group,
+      allergies: patient.allergies.map((allergy) => allergy.substance_np ?? allergy.substance_en),
+      conditions: patient.conditions.map((condition) => condition.canonical_np),
+      synthetic: patient.synthetic,
+      encodes: `sanchai://p/${patient.qr_token}`
+    },
+    highlights: [
+      "Penicillin allergy",
+      "Blood group O+",
+      "Recent negated fever",
+      "Prescription review status: ready"
+    ]
+  };
+}
+
 export async function getPatientById(id: string) {
   const overview = await getPatientOverview();
   if (overview.patient.id !== id) {
