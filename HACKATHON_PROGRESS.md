@@ -67,5 +67,21 @@
   - `pytest tests/test_patients_and_approval.py`: 5 passed in 0.60s.
   - Full test suite (`pytest`): 14 passed in 3.44s.
   - Verified approval gate commit increases patient timeline by 1 and prevents uncommitted mutations.
-- **Commit:** (Pending)
+- **Commit:** `2de4fc4`
 - **Next Task:** Increment 5: QR generation and emergency payload encoding (`backend/record/qr.py` and `GET /api/v1/patients/{id}/qr`).
+
+---
+
+### Increment 5: Segno QR Generation & Emergency Payload
+- **Status:** COMPLETED & VERIFIED
+- **Changes:**
+  - Implemented `backend/record/qr.py` utilizing `segno` (with `qrcode` fallback) to generate high-contrast scannable QR codes for emergency responders.
+  - Built `build_qr_payload` constructing `QrPayload` with `sanchai_id`, `qr_token`, `encodes`, allergies, active conditions, and base64 PNG data URI.
+  - Added `GET /api/v1/patients/{id}/qr` (JSON and PNG format) and `GET /api/v1/patients/{id}/qr.png` (direct image streaming).
+  - Added unit test suite in `tests/test_qr.py`.
+- **Verification:**
+  - `pytest tests/test_qr.py`: 4 passed in 0.64s.
+  - Full test suite (`pytest`): 18 passed in 4.17s.
+  - Verified genuine PNG bytes generation with `\x89PNG\r\n\x1a\n` header.
+- **Commit:** (Pending)
+- **Next Task:** Increment 6: FHIR R4 interoperability bundle export strictly excluding negated findings (`backend/record/fhir.py` and `GET /api/v1/patients/{id}/fhir`).

@@ -4,11 +4,13 @@ import datetime as dt
 import json
 import sqlite3
 
-from fastapi import APIRouter, HTTPException, Query
+from typing import Any
+from fastapi import APIRouter, HTTPException, Query, Response
 
 from backend.db import session
 from backend.nlp.lexicon import Concept, Lexicon, get_lexicon
 from backend.record import entries as record
+from backend.record import qr
 from backend.schemas import (
     Allergy,
     CommitEntryRequest,
@@ -17,6 +19,7 @@ from backend.schemas import (
     InlineNote,
     PatientDetail,
     PatientSummary,
+    QrPayload,
     RecordConcept,
     RecordEntryDetail,
     RecordEntrySummary,
@@ -289,3 +292,34 @@ def commit_entry(patient_id: str, payload: CommitEntryRequest) -> RecordEntryDet
         created_row = record.get_entry(con, entry_id)
         assert created_row is not None
         return _to_detail(created_row, lexicon)
+
+
+@router.get("/patients/{patient_id}/qr", response_model=QrPayload)
+def get_patient_qr(
+    patient_id: str,
+    format: str | None = Query(default=None),
+) -> Any:
+    """Generate high-contrast Segno emergency QR payload and scannable code."""
+    lexicon = get_lexicon()
+    with session() as con:
+        patient = record.get_patient(con, patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+
+        qr_payload = qr.build_qr_payload(patient, con, lexicon)
+        if format == "png":
+            png_bytes = qr.encode_png_bytes(qr_payload.encodes or f"sanchai://p/{patient['qr_token']}")
+            return Response(content=png_bytes, media_type="image/png")
+        return qr_payload
+
+
+@router.get("/patients/{patient_id}/qr.png")
+def get_patient_qr_image(patient_id: str) -> Response:
+    """Return scannable QR code PNG image bytes directly."""
+    with session() as con:
+        patient = record.get_patient(con, patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+        encodes = f"sanchai://p/{patient['qr_token']}"
+        png_bytes = qr.encode_png_bytes(encodes)
+        return Response(content=png_bytes, media_type="image/png")
