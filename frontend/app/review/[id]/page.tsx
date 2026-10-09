@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { ApprovalActions } from "@/components/approval-actions";
 import { loadEntryData } from "@/lib/frontend-data";
 
 type ReviewPageProps = {
@@ -96,17 +97,10 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
       <section className="timeline-card" style={{ marginTop: 24 }}>
         <p className="section-title">Approval</p>
-        <div className="actions">
-          <button className="button button--primary" type="button">
-            Commit to record
-          </button>
-          <button className="button button--secondary" type="button">
-            Send back for correction
-          </button>
-        </div>
+        <ApprovalActions entryId={entry.id} />
         <p className="footer-note">
-          This screen is the human-in-the-loop gate. The commit action stays local until the
-          backend write endpoint is wired in a later phase.
+          This screen is the human-in-the-loop gate. The commit action writes to the seeded
+          backend now, and later phases can swap it for persistence.
         </p>
       </section>
     </DashboardShell>

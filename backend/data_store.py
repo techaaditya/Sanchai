@@ -17,6 +17,8 @@ ENTRY_ALIASES = {
     "entry-1022": "entry_voice_negation_01",
 }
 
+COMMITTED_ENTRY_IDS: set[str] = set()
+
 
 def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -239,7 +241,15 @@ def get_patient_entries(patient_id: str) -> list[dict[str, Any]]:
 
     entries: list[dict[str, Any]] = []
     if rx:
-        entries.append(_build_timeline_entry("entry-1024", rx, label="Handwritten prescription", status="review", input_type="image"))
+        entries.append(
+            _build_timeline_entry(
+                "entry-1024",
+                rx,
+                label="Handwritten prescription",
+                status="committed" if "entry-1024" in COMMITTED_ENTRY_IDS else "review",
+                input_type="image",
+            )
+        )
     if lab:
         entries.append(_build_timeline_entry("entry-1023", lab, label="Digital lab report", status="committed", input_type="pdf"))
     if note:
@@ -257,11 +267,24 @@ def get_entry_detail(entry_id: str) -> dict[str, Any] | None:
     if not source_entry:
         return None
 
+    status = "committed" if entry_id in COMMITTED_ENTRY_IDS else ("review" if entry_id == "entry-1024" else "committed")
+
     if entry_id == "entry-1024":
-        return _build_timeline_entry("entry-1024", source_entry, label="Handwritten prescription", status="review", input_type="image")
+        return _build_timeline_entry("entry-1024", source_entry, label="Handwritten prescription", status=status, input_type="image")
     if entry_id == "entry-1023":
         return _build_timeline_entry("entry-1023", source_entry, label="Digital lab report", status="committed", input_type="pdf")
     return _build_timeline_entry("entry-1022", source_entry, label="Clinic note", status="committed", input_type="text")
+
+
+def commit_entry(entry_id: str) -> dict[str, Any] | None:
+    entry = get_entry_detail(entry_id)
+    if not entry:
+        return None
+
+    COMMITTED_ENTRY_IDS.add(entry_id)
+    committed = dict(entry)
+    committed["status"] = "committed"
+    return committed
 
 
 def get_dashboard() -> dict[str, Any]:

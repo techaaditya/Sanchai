@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from backend.config import settings
-from backend.data_store import get_dashboard, get_entry_detail, get_patient_detail, get_patient_entries
+from backend.data_store import commit_entry, get_dashboard, get_entry_detail, get_patient_detail, get_patient_entries
 
 
 class GenericRef(BaseModel):
@@ -158,6 +158,11 @@ class DashboardResponse(BaseModel):
     intake: IntakeResponse
 
 
+class CommitResponse(BaseModel):
+    committed: bool
+    entry: RecordEntryDetail
+
+
 app = FastAPI(title="Sanchai API", version="0.1.0")
 
 app.add_middleware(
@@ -208,3 +213,11 @@ def entry_detail(entry_id: str) -> dict[str, Any]:
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
     return entry
+
+
+@app.post("/api/v1/entries/{entry_id}/commit", response_model=CommitResponse)
+def commit_entry_endpoint(entry_id: str) -> dict[str, Any]:
+    entry = commit_entry(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return {"committed": True, "entry": entry}
