@@ -38,6 +38,35 @@ class NormalizedConcept(BaseModel):
     icd10_code: str | None = None
     generic: GenericRef | None = None
 
+    @classmethod
+    def from_match(cls, match: Any, lexicon: Any) -> NormalizedConcept:
+        concept = match.concept
+        generic = lexicon.generic_for(concept) if hasattr(lexicon, "generic_for") else None
+        return cls(
+            concept_id=concept.concept_id,
+            surface_form=match.surface_form,
+            canonical_en=concept.canonical_en,
+            canonical_np=concept.canonical_np,
+            concept_type=concept.concept_type,
+            tier=match.tier,
+            confidence=match.confidence,
+            negated=match.negated,
+            start=match.start_char,
+            end=match.end_char,
+            reasoning=match.reasoning,
+            icd11_code=concept.icd11_code,
+            icd10_code=concept.icd10_code,
+            generic=(
+                GenericRef(
+                    concept_id=generic.concept_id,
+                    canonical_en=generic.canonical_en,
+                    canonical_np=generic.canonical_np,
+                )
+                if generic
+                else None
+            ),
+        )
+
 
 class NormalizeRequest(BaseModel):
     text: str = Field(min_length=1, max_length=8000)
@@ -59,6 +88,20 @@ class NormalizeResponse(BaseModel):
     frequency_per_day: int | None = None
     unmatched: list[str] = Field(default_factory=list)
     tier_counts: dict[int, int] = Field(default_factory=dict)
+
+    @classmethod
+    def from_result(cls, result: Any, lexicon: Any) -> NormalizeResponse:
+        assertions = result.assertions
+        return cls(
+            text=result.text,
+            prepared_text=result.prepared_text,
+            concepts=[NormalizedConcept.from_match(m, lexicon) for m in assertions],
+            modifiers=[NormalizedConcept.from_match(m, lexicon) for m in result.matches if m not in assertions],
+            duration_days=result.duration_days,
+            frequency_per_day=result.frequency_per_day,
+            unmatched=result.unmatched,
+            tier_counts=result.tier_counts(),
+        )
 
 
 class LexiconEntry(BaseModel):
