@@ -129,3 +129,67 @@ def test_fhir_strictly_excludes_negated_findings(client):
 def test_fhir_not_found(client):
     res = client.get("/api/v1/patients/nonexistent_patient/fhir")
     assert res.status_code == 404
+
+
+def test_validate_bundle_rejects_invalid_resources():
+    """Prove the validator is not vacuous: structurally invalid bundles must raise."""
+    from pydantic import ValidationError
+    from backend.record.fhir import validate_bundle
+
+    # Underscore in a resource id violates the FHIR R4 id pattern
+    with pytest.raises(ValidationError):
+        validate_bundle(
+            {
+                "resourceType": "Bundle",
+                "type": "collection",
+                "entry": [
+                    {"resource": {"resourceType": "Patient", "id": "patient_bad"}}
+                ],
+            }
+        )
+
+    # Condition without the required clinicalStatus must be rejected
+    with pytest.raises(ValidationError):
+        validate_bundle(
+            {
+                "resourceType": "Bundle",
+                "type": "collection",
+                "entry": [
+                    {
+                        "resource": {
+                            "resourceType": "Condition",
+                            "id": "cond-1",
+                            "subject": {"reference": "Patient/patient-ram"},
+                            "code": {"text": "Fever"},
+                        }
+                    }
+                ],
+            }
+        )
+
+
+def test_fhir_patient_references_point_to_bundle_resources(client):
+    """Every Patient/... reference must resolve to the Patient resource in the bundle."""
+    response = client.get("/api/v1/patients/patient_ram/fhir")
+    assert response.status_code == 200
+    data = response.json()
+
+    patient_ids = {
+        e["resource"]["id"]
+        for e in data["entry"]
+        if e["resource"]["resourceType"] == "Patient"
+    }
+    assert len(patient_ids) == 1
+
+    import re
+
+    ref_pattern = re.compile(r"^Patient/([A-Za-z0-9\-.]+)$")
+    for entry in data["entry"]:
+        res = entry["resource"]
+        for field_name in ("subject", "patient"):
+            if field_name in res:
+                match = ref_pattern.match(res[field_name]["reference"])
+                assert match, f"malformed reference: {res[field_name]['reference']}"
+                assert match.group(1) in patient_ids, (
+                    f"dangling reference: {res[field_name]['reference']}"
+                )

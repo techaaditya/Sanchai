@@ -39,3 +39,37 @@ def test_get_patient_qr_image_route(client):
 def test_get_qr_not_found(client):
     res = client.get("/api/v1/patients/nonexistent_patient/qr")
     assert res.status_code == 404
+
+
+def test_qr_payload_only_exposes_emergency_fields(client):
+    """The emergency payload must never carry internal IDs, demographic
+    detail beyond the emergency set, or full record contents."""
+    res = client.get("/api/v1/patients/patient_ram/qr")
+    assert res.status_code == 200
+    data = res.json()
+
+    allowed = {
+        "sanchai_id", "arogya_id", "qr_token", "name", "name_np",
+        "blood_group", "allergies", "conditions", "synthetic",
+        "encodes", "qr_png",
+    }
+    assert set(data.keys()) <= allowed
+
+    # Internal row identifiers and non-emergency demographics must not leak
+    assert "id" not in data
+    assert "dob" not in data
+    assert "district" not in data
+    assert "entries" not in data
+    # QR encodes only an opaque token reference, never patient data itself
+    assert data["encodes"] == f"sanchai://p/{data['qr_token']}"
+
+
+def test_qr_conditions_exclude_negated_findings(client):
+    """Patient Ram's record contains a negated 'Fever' (ज्वरो छैन); the
+    emergency payload must not surface it as an active condition."""
+    res = client.get("/api/v1/patients/patient_ram/qr")
+    assert res.status_code == 200
+    condition_names = [c.split(" (")[0] for c in res.json()["conditions"]]
+    assert "Fever" not in condition_names
+    # while asserted conditions still appear
+    assert "Typhoid fever" in condition_names
