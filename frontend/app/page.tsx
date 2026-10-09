@@ -1,6 +1,9 @@
-import { intakePreview, metrics, timeline } from "@/lib/mock-data";
+import Link from "next/link";
+import { loadDashboardData } from "@/lib/frontend-data";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { intake, patient, timeline } = await loadDashboardData();
+
   return (
     <main className="shell">
       <section className="hero">
@@ -15,7 +18,13 @@ export default function HomePage() {
             </p>
 
             <div className="actions">
-              <a className="button button--primary" href="#review-queue">
+              <Link className="button button--primary" href={`/patients/${patient.id}`}>
+                Open patient record
+              </Link>
+              <Link className="button button--secondary" href="/review/entry-1024">
+                Open approval screen
+              </Link>
+              <a className="button button--secondary" href="#review-queue">
                 Open review queue
               </a>
               <a className="button button--secondary" href="#timeline">
@@ -24,12 +33,18 @@ export default function HomePage() {
             </div>
 
             <div className="metrics">
-              {metrics.map((metric) => (
-                <article key={metric.label} className={`metric metric--${metric.tone}`}>
-                  <span className="metric__label">{metric.label}</span>
-                  <div className="metric__value">{metric.value}</div>
-                </article>
-              ))}
+              <article className="metric metric--positive">
+                <span className="metric__label">Patient</span>
+                <div className="metric__value">{patient.name_np ?? patient.name}</div>
+              </article>
+              <article className="metric metric--neutral">
+                <span className="metric__label">Lexicon coverage</span>
+                <div className="metric__value">261 concepts</div>
+              </article>
+              <article className="metric metric--warning">
+                <span className="metric__label">Safety gate</span>
+                <div className="metric__value">Approval before write</div>
+              </article>
             </div>
           </div>
         </div>
@@ -39,12 +54,12 @@ export default function HomePage() {
             <p className="section-title">Review queue</p>
             <div className="review-grid">
               <div className="review-meta">
-                <span>{intakePreview.title}</span>
-                <span>{Math.round(intakePreview.confidence * 100)}% confidence</span>
+                <span>Current review queue</span>
+                <span>{Math.round((intake.normalized?.concepts.length ?? 0) / 3 * 100)}% structured</span>
               </div>
-              <p className="review-excerpt">{intakePreview.excerpt}</p>
+              <p className="review-excerpt">{intake.corrected_text}</p>
               <div className="review-meta">
-                <span>{intakePreview.source}</span>
+                <span>{intake.extraction_method}</span>
                 <span>Approval before write</span>
               </div>
             </div>
@@ -90,18 +105,18 @@ export default function HomePage() {
                   {entry.status === "review" ? "Needs approval" : "Committed"}
                 </span>
               </div>
-              <p className="timeline-item__summary">{entry.summary}</p>
+              <p className="timeline-item__summary">{entry.summary_np}</p>
               <div className="review-meta">
-                <span>{entry.date}</span>
-                <span>{entry.mode.toUpperCase()}</span>
+                <span>{entry.record_date}</span>
+                <span>{entry.input_type.toUpperCase()}</span>
                 <span>{entry.id}</span>
               </div>
             </article>
           ))}
         </div>
         <p className="footer-note">
-          Next phase: connect these cards to backend intake, patient, and normalization
-          endpoints one at a time.
+          Next phase: replace this mock data layer with real FastAPI endpoints, starting
+          with intake and patient summary reads.
         </p>
       </section>
     </main>
