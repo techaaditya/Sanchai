@@ -233,6 +233,63 @@ export function getEmergencySummary() {
   };
 }
 
+export function getIntakeStudio() {
+  return {
+    title: "Intake studio",
+    sourceModes: ["image", "pdf", "text"],
+    queue: [
+      {
+        id: "draft-901",
+        title: "Handwritten prescription",
+        subtitle: "OCR + normalization preview",
+        status: "Ready for review",
+      },
+      {
+        id: "draft-902",
+        title: "Lab report PDF",
+        subtitle: "Direct extraction path",
+        status: "Queued",
+      },
+      {
+        id: "draft-903",
+        title: "Clinic note",
+        subtitle: "Romanized text normalization",
+        status: "Draft",
+      },
+    ],
+    documentHints: [
+      "Keep handwriting centered in the frame",
+      "Preserve medication dosage and units",
+      "Mark negation words clearly",
+    ],
+    preview: normalizedPreview,
+  };
+}
+
+export function getScannerSession() {
+  return {
+    title: "QR scanner",
+    lastScan: {
+      token: patient.qr_token,
+      patientName: patient.name_np,
+      timestamp: "Today · 09:42",
+      source: "Camera preview",
+    },
+    recentScans: [
+      {
+        token: "tok_demo_1024",
+        label: "Demo emergency card",
+        outcome: "Opened emergency summary",
+      },
+      {
+        token: "tok_demo_5566",
+        label: "Ward wristband",
+        outcome: "Synthetic card matched",
+      },
+    ],
+  };
+}
+
 export async function getPatientById(id: string) {
   const overview = await getPatientOverview();
   if (overview.patient.id !== id) {

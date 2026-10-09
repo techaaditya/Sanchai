@@ -1,4 +1,11 @@
-import { getEmergencySummary, getEntryById, getPatientOverview, getTimelineEntries } from "@/lib/mock-api";
+import {
+  getEmergencySummary,
+  getEntryById,
+  getIntakeStudio,
+  getPatientOverview,
+  getScannerSession,
+  getTimelineEntries,
+} from "@/lib/mock-api";
 
 export async function loadDashboardData() {
   const overview = await getPatientOverview();
@@ -33,4 +40,12 @@ export async function loadEmergencySummary(token: string) {
     return null;
   }
   return overview;
+}
+
+export async function loadIntakeStudio() {
+  return getIntakeStudio();
+}
+
+export async function loadScannerSession() {
+  return getScannerSession();
 }

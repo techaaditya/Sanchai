@@ -77,6 +77,27 @@ export default async function PatientPage({ params }: PatientPageProps) {
           </article>
         </div>
       </section>
+
+      <section className="timeline-card" style={{ marginTop: 24 }}>
+        <p className="section-title">Recent timeline</p>
+        <div className="timeline">
+          {timeline.map((entry) => (
+            <article key={entry.id} className="timeline-item">
+              <div className="timeline-item__top">
+                <span className="timeline-item__label">{entry.label}</span>
+                <span className={`tag tag--${entry.status}`}>
+                  {entry.status === "review" ? "Needs approval" : "Committed"}
+                </span>
+              </div>
+              <p className="timeline-item__summary">{entry.summary_np}</p>
+              <div className="review-meta">
+                <span>{entry.record_date}</span>
+                <span>{entry.document_class ?? "entry"}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </DashboardShell>
   );
 }

@@ -18,6 +18,12 @@ export default async function HomePage() {
             </p>
 
             <div className="actions">
+              <a className="button button--secondary" href="/intake">
+                Open intake studio
+              </a>
+              <a className="button button--secondary" href="/scan">
+                Open QR scanner
+              </a>
               <Link className="button button--primary" href={`/patients/${patient.id}`}>
                 Open patient record
               </Link>
@@ -90,6 +96,16 @@ export default async function HomePage() {
                 <p className="timeline-item__summary">
                   Voice support stays out of this release so the frontend can stay focused
                   on the clinical document workflow.
+                </p>
+              </div>
+
+              <div className="timeline-item">
+                <div className="timeline-item__top">
+                  <span className="timeline-item__label">Emergency QR</span>
+                  <span className="tag tag--committed">Ready</span>
+                </div>
+                <p className="timeline-item__summary">
+                  The emergency summary is available as a simple dummy-data card for quick demo flows.
                 </p>
               </div>
             </div>
