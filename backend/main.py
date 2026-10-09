@@ -11,24 +11,27 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
 
+from backend.db import TABLES, init_db, session
+from backend.seed import seed_all
+
 PROBE_TIMEOUT_SECONDS = 2.0
 
 
 def _probe_db() -> dict[str, str]:
-    """Check database file connectivity and basic integrity."""
-    db_file = Path(settings.db_path)
-    if not db_file.exists():
-        return {"service": "db", "status": "pending_init", "detail": "db file not yet initialized"}
+    """Check database tables and integrity."""
     try:
-        import sqlite3
-        con = sqlite3.connect(settings.db_path)
-        cur = con.cursor()
-        cur.execute("SELECT 1")
-        cur.close()
-        con.close()
-        return {"service": "db", "status": "up"}
+        with session() as con:
+            present = {
+                row["name"]
+                for row in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+            }
     except Exception as exc:  # noqa: BLE001
         return {"service": "db", "status": "down", "detail": type(exc).__name__}
+
+    missing = sorted(set(TABLES) - present)
+    if missing:
+        return {"service": "db", "status": "degraded", "detail": f"missing tables: {', '.join(missing)}"}
+    return {"service": "db", "status": "up"}
 
 
 async def _probe_remote(client: httpx.AsyncClient, name: str, url: str, **kwargs) -> dict[str, str]:
@@ -43,17 +46,9 @@ async def _probe_remote(client: httpx.AsyncClient, name: str, url: str, **kwargs
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Try initializing DB if db module is present
-    try:
-        from backend.db import init_db
-        from backend.seed import seed_all
-        init_db()
-        from backend.db import session
-        with session() as con:
-            seed_all(con)
-    except ImportError:
-        pass
-    # Reset lexicon cache if available
+    init_db()
+    with session() as con:
+        seed_all(con)
     try:
         from backend.nlp.lexicon import reset_lexicon_cache
         reset_lexicon_cache()
