@@ -50,5 +50,22 @@
   - Full suite (`pytest`): 9 passed in 2.50s.
   - Digital PDF extraction verified via in-memory PyMuPDF documents.
   - Offline vision OCR resilience verified against uncontactable model backends.
-- **Commit:** (Pending)
+- **Commit:** `4dd650b`
 - **Next Task:** Increment 4: Explicit approval-before-write gate and patient record entry commit (`backend/record/entries.py` and `POST /api/v1/patients/{id}/entries`).
+
+---
+
+### Increment 4: Approval-Before-Write Gate & Patient Record Retrieval
+- **Status:** COMPLETED & VERIFIED
+- **Changes:**
+  - Implemented `backend/record/entries.py` with concept hydration against active lexicon, normalization encoding, timeline summaries with negation badges (`✕`), and active conditions extraction excluding negated findings.
+  - Implemented `backend/routers/patients.py` with `GET /api/v1/patients`, `GET /api/v1/patients/{id}`, `GET /api/v1/patients/{id}/record`, `GET /api/v1/patients/{id}/entries/{entry_id}`.
+  - Implemented `POST /api/v1/patients/{id}/entries`: the **Approval-Before-Write gate** — the only route permitted to mutate `record_entries` in SQLite, requiring verified Gregorian dates and explicit user commitment.
+  - Mounted patients router into `backend/main.py`.
+  - Added comprehensive test suite in `tests/test_patients_and_approval.py`.
+- **Verification:**
+  - `pytest tests/test_patients_and_approval.py`: 5 passed in 0.60s.
+  - Full test suite (`pytest`): 14 passed in 3.44s.
+  - Verified approval gate commit increases patient timeline by 1 and prevents uncommitted mutations.
+- **Commit:** (Pending)
+- **Next Task:** Increment 5: QR generation and emergency payload encoding (`backend/record/qr.py` and `GET /api/v1/patients/{id}/qr`).
