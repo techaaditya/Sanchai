@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Iterator
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
@@ -29,6 +30,8 @@ from backend.schemas import (
 )
 
 router = APIRouter(tags=["intake"])
+
+logger = logging.getLogger("sanchai.intake")
 
 DOCUMENT_CLASSES = {CLASS_PRESCRIPTION, CLASS_LAB_REPORT, CLASS_BILL, CLASS_NOTE}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
@@ -101,13 +104,31 @@ async def intake_ocr(
 
 
 def _sse(events: Iterator[IntakeEvent]) -> Iterator[str]:
-    lexicon = get_lexicon()
-    for event in events:
-        if isinstance(event.data, IntakeResult):
-            body = event.data.to_response(lexicon).model_dump()
-        else:
-            body = event.data
-        yield f"event: {event.name}\ndata: {json.dumps({'event': event.name, 'data': body}, ensure_ascii=False)}\n\n"
+    """Serialize intake events as SSE frames.
+
+    Guarantees:
+    - A pipeline failure mid-stream emits a terminal ``event: error`` frame
+      instead of silently truncating the response (streaming headers are
+      already sent, so the HTTP status cannot change after the first frame).
+    - The upstream ``run_intake`` generator is always closed, including on
+      client disconnect (GeneratorExit), so no pipeline state is leaked.
+    """
+    try:
+        lexicon = get_lexicon()
+        for event in events:
+            if isinstance(event.data, IntakeResult):
+                body = event.data.to_response(lexicon).model_dump()
+            else:
+                body = event.data
+            yield f"event: {event.name}\ndata: {json.dumps({'event': event.name, 'data': body}, ensure_ascii=False)}\n\n"
+    except Exception as exc:  # noqa: BLE001 — stream is already open; report and terminate
+        logger.exception("Intake stream aborted by pipeline error")
+        error_body = {"event": "error", "data": {"error": type(exc).__name__, "detail": str(exc)}}
+        yield f"event: error\ndata: {json.dumps(error_body, ensure_ascii=False)}\n\n"
+    finally:
+        closer = getattr(events, "close", None)
+        if callable(closer):
+            closer()
 
 
 @router.post("/intake/stream")

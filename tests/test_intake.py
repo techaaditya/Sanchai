@@ -105,3 +105,66 @@ def test_intake_stream(client):
     content = response.text
     assert "event: routing" in content
     assert "event: done" in content
+
+
+def test_sse_closes_upstream_on_consumer_close():
+    """Closing the SSE stream (client disconnect) must close the pipeline generator."""
+    from backend.routers.intake import _sse
+    from backend.intake.pipeline import IntakeEvent
+
+    closed: list[bool] = []
+
+    def upstream():
+        try:
+            yield IntakeEvent("routing", {"input_type": "text"})
+            yield IntakeEvent("extracting", {"stage": "extracting", "input_type": "text"})
+        finally:
+            closed.append(True)
+
+    stream = _sse(upstream())
+    first = next(stream)
+    assert "event: routing" in first
+    stream.close()  # simulates Starlette closing the generator on client disconnect
+    assert closed == [True]
+
+
+def test_sse_emits_error_event_when_upstream_raises():
+    """A mid-stream pipeline failure must terminate with an explicit error frame."""
+    from backend.routers.intake import _sse
+    from backend.intake.pipeline import IntakeEvent
+
+    def upstream():
+        yield IntakeEvent("routing", {"input_type": "text"})
+        raise RuntimeError("pipeline exploded")
+
+    frames = list(_sse(upstream()))
+    assert len(frames) == 2
+    assert "event: routing" in frames[0]
+    assert "event: error" in frames[1]
+    assert "pipeline exploded" in frames[1]
+    assert "event: done" not in "".join(frames)
+
+
+def test_intake_stream_emits_error_event_on_storage_failure(client, monkeypatch):
+    """End-to-end: storage failure after the stream opens must not truncate silently."""
+    def boom(*args, **kwargs):
+        raise OSError("simulated storage failure")
+
+    monkeypatch.setattr("backend.intake.pipeline.save_upload", boom)
+
+    dummy_png = (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05"
+        b"\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    response = client.post(
+        "/api/v1/intake/stream",
+        files={"file": ("rx_test.png", dummy_png, "image/png")},
+        data={"use_model": "false", "correct": "true"},
+    )
+    assert response.status_code == 200
+    content = response.text
+    assert "event: routing" in content
+    assert "event: error" in content
+    assert "simulated storage failure" in content
+    assert "event: done" not in content
