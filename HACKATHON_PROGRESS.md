@@ -100,5 +100,25 @@
   - `pytest tests/test_fhir.py`: 3 passed in 0.56s.
   - Full test suite (`pytest`): 21 passed in 2.14s.
   - Verified `negated_excluded >= 1` and confirmed no negated conditions appear in exported resources.
-- **Commit:** (Pending)
+- **Commit:** `d233965`
 - **Next Task:** Increment 7: Comprehensive end-to-end integration tests (`tests/test_integration_flow.py`).
+
+---
+
+### Increment 7: End-to-End Clinical Flow Integration Tests
+- **Status:** COMPLETED & VERIFIED
+- **Changes:**
+  - Implemented `tests/test_integration_flow.py` asserting the complete clinician lifecycle:
+    1. System health probe `/api/v1/health` verification
+    2. Patient retrieval `/api/v1/patients`
+    3. Multimodal document intake simulation with instant PyMuPDF PDF extraction and 3-tier normalization
+    4. Guardrail validation: verifying uncommitted intake produces 0 database mutations
+    5. Approval-Before-Write gate execution via `POST /api/v1/patients/{id}/entries`
+    6. Timeline chronology verification and entry retrieval
+    7. Emergency Segno QR validation (JSON payload and PNG binary stream)
+    8. Interoperable HL7 FHIR R4 export validation with strict negation exclusion
+- **Verification:**
+  - `pytest tests/test_integration_flow.py`: 1 passed in 1.90s.
+  - Full project test suite (`pytest`): 22 passed in 2.70s.
+- **Commit:** (Pending)
+- **Next Task:** Maintain demo readiness and coordinate API contracts with Person 1 (Frontend) and Person 3 (AI Model Serving).
