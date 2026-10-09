@@ -1,1 +1,1 @@
-"""ArogyaKhata backend package."""
+"""Sanchai backend package."""

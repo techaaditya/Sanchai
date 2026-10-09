@@ -27,7 +27,7 @@ from backend.ai.prompts import (
 )
 from backend.config import settings
 
-logger = logging.getLogger("arogyakhata.ai.engine")
+logger = logging.getLogger("sanchai.ai.engine")
 
 VISION_TIMEOUT_SECONDS = 90.0
 TEXT_TIMEOUT_SECONDS = 45.0

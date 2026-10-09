@@ -1,4 +1,4 @@
-"""Pydantic v2 schemas for ArogyaKhata API contracts.
+"""Pydantic v2 schemas for Sanchai API contracts.
 
 These models define data transfer contracts across ingestion, 3-tier normalization,
 patient health records, clinical standards (FHIR/QR), and evaluation benchmarks.
@@ -200,7 +200,8 @@ class PatientSummary(BaseModel):
     id: str
     name: str
     name_np: str | None = None
-    arogya_id: str
+    sanchai_id: str = Field(default="SANCHAI-0001", description="A Sanchai patient identifier.")
+    arogya_id: str | None = Field(default=None, description="Legacy identifier alias")
     age: int | None = None
     gender: str | None = None
     gender_np: str | None = None
@@ -295,7 +296,8 @@ class RecordResponse(BaseModel):
 
 class QrPayload(BaseModel):
     """Emergency responder payload encoded into QR."""
-    arogya_id: str
+    sanchai_id: str = Field(default="SANCHAI-0001", description="A Sanchai patient identifier.")
+    arogya_id: str | None = Field(default=None, description="Legacy identifier alias")
     qr_token: str
     name: str
     name_np: str | None = None

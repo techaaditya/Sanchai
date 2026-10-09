@@ -1,6 +1,6 @@
-# ArogyaKhata (आरोग्य खाता) — Core Project Directives & Team Alignment
+# Sanchai (सञ्चै) — Core Project Directives & Team Alignment
 
-This document outlines the locked technical decisions and constraints for the ArogyaKhata project. **All team members must align with these directives throughout the entire development lifecycle.**
+This document outlines the locked technical decisions and constraints for **Sanchai (सञ्चै)**. **All team members must align with these directives throughout the entire development lifecycle.**
 
 ---
 
@@ -44,4 +44,4 @@ To guarantee clinical safety and eliminate hallucinations:
 * Write clean, idiomatic, typed code (Pydantic v2 + FastAPI backend, Next.js App Router frontend).
 * Commit messages must be precise, professional, and concise.
 * **Do NOT include AI co-authored trailers** (`Co-authored-by: ...`) in git commit messages.
-* Keep internal planning docs and archives strictly local (`rebuild_docs/` and `archive/` in `.gitignore`).
+* Keep internal planning docs and archives strictly local (`rebuild_docs/`, `archive/`, and `*.zip` in `.gitignore`).

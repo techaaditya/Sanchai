@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Runtime configuration for ArogyaKhata backend.
+    """Runtime configuration for Sanchai backend.
 
     Values are resolved from the environment and optional .env file.
     Core Architecture Decision:
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     local_gemma_model: str = "gemma4:31b-cloud"
 
     # Database & Data asset paths
-    db_path: str = "./data/arogyakhata.db"
+    db_path: str = "./data/sanchai.db"
     lexicon_path: str = "./data/nepali_clinical_lexicon.json"
     benchmark_path: str = "./data/nepclinbench.json"
     upload_dir: str = "./uploads"

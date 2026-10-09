@@ -1,4 +1,4 @@
-"""Versioned production prompt loader for ArogyaKhata AI engine."""
+"""Versioned production prompt loader for Sanchai AI engine."""
 
 from __future__ import annotations
 

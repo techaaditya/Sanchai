@@ -1,7 +1,7 @@
-# ArogyaKhata (आरोग्य खाता)
+# Sanchai (सञ्चै)
 ### Zero-Hallucination Nepali Clinical Health Ledger & Multimodal Ingestion
 
-ArogyaKhata is a clinically grounded personal health record system built for Nepal. It converts paper-based handwritten doctor prescriptions, clinic slips, and digital lab reports into structured, longitudinal medical histories with 0% hallucination on known clinical terms.
+**Sanchai (सञ्चै)** — named after the warm Nepali greeting *"सञ्चै हुनुहुन्छ?"* (Are you well?) — is a clinically grounded personal health record system built for Nepal. It converts paper-based handwritten doctor prescriptions, clinic slips, and digital lab reports into structured, longitudinal medical histories with 0% hallucination on known clinical terms.
 
 ---
 
@@ -20,7 +20,7 @@ ArogyaKhata is a clinically grounded personal health record system built for Nep
 3. **Approval-Before-Write Gate:**
    * Human-in-the-loop review interface: medical records are committed only upon patient/clinician confirmation.
 4. **Emergency Health QR & Interoperability:**
-   * Offline-scannable emergency QR code (`segno`) encoding critical allergies, blood group, and conditions.
+   * Offline-scannable emergency QR code (`segno`) encoding critical allergies, blood group, and conditions (`sanchai://p/{token}`).
    * Standard HL7 FHIR R4 collection bundle export (strictly excluding negated conditions).
 5. **NepClinBench Evaluation Suite:**
    * Gold-standard 60-sample benchmark demonstrating 58/60 exact match and 1.000 precision.
@@ -50,7 +50,7 @@ MODEL_BACKEND=cloud
 OLLAMA_CLOUD_URL=https://ollama.com
 MODEL_NAME=gemma4:31b-cloud
 OLLAMA_API_KEY=your_key_here
-DB_PATH=./data/arogyakhata.db
+DB_PATH=./data/sanchai.db
 ```
 
 ### 2. Install Dependencies
@@ -67,9 +67,9 @@ python -c "from backend.nlp import normalize; res = normalize('ज्वरो �
 
 ## 👥 Parallel Team Workflow (3-Person Split)
 
-The foundation contracts, Pydantic v2 schemas (`backend/schemas.py`), and data assets are frozen on `main`. Team members can work independently on dedicated feature branches without blocking each other:
+The foundation contracts, Pydantic v2 schemas (`backend/schemas.py`), and data assets are frozen on `main`. All three team members can branch off `main` and work completely in parallel:
 
-| Role | Branch | Focus Area |
+| Role | Suggested Branch | Focus Area |
 | :--- | :--- | :--- |
 | **Person 1 (Frontend)** | `feat/frontend` | Next.js App Router, intake upload interface, approval card UI, timeline drawer, QR scanner |
 | **Person 2 (Backend)** | `feat/backend-api` | FastAPI routers (`/api/v1/intake`, `/api/v1/patients`), SQLite DB persistence, Segno QR, FHIR R4 |

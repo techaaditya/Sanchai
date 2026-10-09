@@ -1,1 +1,1 @@
-"""ArogyaKhata AI & Model serving package."""
+"""Sanchai AI & Model serving package."""

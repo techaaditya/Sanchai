@@ -59,3 +59,5 @@ Thumbs.db
 # Hackathon planning & archive (strictly kept local)
 rebuild_docs/
 archive/
+*.zip
+rebuildandarchive.zip
