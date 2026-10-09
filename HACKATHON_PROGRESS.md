@@ -32,5 +32,23 @@
 - **Verification:**
   - `pytest tests/test_db_seed.py tests/test_health.py`: 4 passed in 9.10s.
   - Health probe confirms database status is "up".
-- **Commit:** (Pending)
+- **Commit:** `c9862df`
 - **Next Task:** Increment 3: Document intake and 3-tier normalization integration (`backend/routers/intake.py` and document extraction for PDF, images, and text).
+
+---
+
+### Increment 3: Document Intake & 3-Tier Normalization Integration
+- **Status:** COMPLETED & VERIFIED
+- **Changes:**
+  - Implemented `backend/intake/documents.py` for instant PyMuPDF digital PDF text extraction, rasterization for scanned docs, and rule-based document classification.
+  - Implemented `backend/intake/storage.py` for content-addressed asset storage preventing path traversal.
+  - Implemented `backend/intake/pipeline.py` orchestrating routing -> extraction -> spell-correction -> classification -> 3-tier normalization -> SSE event progression.
+  - Implemented `backend/routers/intake.py` with `/api/v1/intake/text`, `/api/v1/intake/ocr`, `/api/v1/intake/stream` (SSE), and `/api/v1/intake/normalize`.
+  - Added comprehensive test coverage in `tests/test_intake.py`.
+- **Verification:**
+  - `pytest tests/test_intake.py`: 5 passed in 0.62s.
+  - Full suite (`pytest`): 9 passed in 2.50s.
+  - Digital PDF extraction verified via in-memory PyMuPDF documents.
+  - Offline vision OCR resilience verified against uncontactable model backends.
+- **Commit:** (Pending)
+- **Next Task:** Increment 4: Explicit approval-before-write gate and patient record entry commit (`backend/record/entries.py` and `POST /api/v1/patients/{id}/entries`).

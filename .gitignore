@@ -39,6 +39,9 @@ env/
 *.sqlite3
 data/*.db
 
+# Uploads
+uploads/
+
 # Node / Next.js
 node_modules/
 .next/
