@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { loadPatientData } from "@/lib/frontend-data";
+import { getApiBaseUrl } from "@/lib/api";
 
 type PatientPageProps = {
   params: Promise<{ id: string }>;
@@ -51,7 +52,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </Link>
             <a
               className="button button--secondary"
-              href={`http://localhost:8000/api/v1/patients/${patient.id}/summary.pdf`}
+              href={`${getApiBaseUrl()}/api/v1/patients/${patient.id}/summary.pdf`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -59,7 +60,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </a>
             <a
               className="button button--secondary"
-              href={`http://localhost:8000/api/v1/patients/${patient.id}/fhir`}
+              href={`${getApiBaseUrl()}/api/v1/patients/${patient.id}/fhir`}
               target="_blank"
               rel="noopener noreferrer"
             >

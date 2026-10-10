@@ -17,8 +17,14 @@ type DashboardPayload = {
 const FALLBACK_API_BASE_URL = "http://localhost:8000";
 
 export function getApiBaseUrl() {
-  const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-  return configured || FALLBACK_API_BASE_URL;
+  const configured = (
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL
+  )?.trim();
+  if (configured) {
+    return configured.replace(/\/api\/v1\/?$/, "").replace(/\/+$/, "");
+  }
+  return FALLBACK_API_BASE_URL;
 }
 
 async function safeJson<T>(response: Response): Promise<T | null> {

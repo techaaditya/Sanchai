@@ -2,14 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { getApiBaseUrl } from "@/lib/api";
 
 type ApprovalActionsProps = {
   entryId: string;
 };
-
-function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:8000";
-}
 
 export function ApprovalActions({ entryId }: ApprovalActionsProps) {
   const router = useRouter();

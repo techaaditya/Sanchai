@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import type { EvalRunResponse, ItemRow } from "@/lib/contracts";
+import { getApiBaseUrl } from "@/lib/api";
 
 const ABLATION_DATA = [
   {
@@ -100,7 +101,7 @@ export default function EvidencePage() {
 
   const fetchEval = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/eval/latest");
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/eval/latest`);
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -119,7 +120,7 @@ export default function EvidencePage() {
     const start = performance.now();
     startTransition(async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/eval/run", {
+        const res = await fetch(`${getApiBaseUrl()}/api/v1/eval/run`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ use_model: false, persist: true }),

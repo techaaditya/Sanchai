@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { loadEmergencySummary } from "@/lib/frontend-data";
+import { getApiBaseUrl } from "@/lib/api";
 
 type EmergencyPageProps = {
   params: Promise<{ token: string }>;
@@ -67,7 +68,7 @@ export default async function EmergencyPage({ params }: EmergencyPageProps) {
             </p>
             <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 16 }}>
               <img
-                src={`http://localhost:8000/api/v1/patients/${data.patient.id}/qr.png`}
+                src={`${getApiBaseUrl()}/api/v1/patients/${data.patient.id}/qr.png`}
                 alt="Emergency QR Code"
                 width={110}
                 height={110}

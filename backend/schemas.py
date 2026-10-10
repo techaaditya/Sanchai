@@ -31,8 +31,8 @@ class NormalizedConcept(BaseModel):
     tier: int = Field(ge=1, le=3, description="1: Exact, 2: Fuzzy/Orthography, 3: Gemma Constrained")
     confidence: float
     negated: bool = False
-    start: int = Field(description="Start character index in prepared text")
-    end: int = Field(description="End character index in prepared text")
+    start: int = Field(default=0, description="Start character index in prepared text")
+    end: int = Field(default=0, description="End character index in prepared text")
     reasoning: str | None = None
     icd11_code: str | None = None
     icd10_code: str | None = None
@@ -265,7 +265,7 @@ class RecordEntryDetail(RecordEntrySummary):
     duration_days: int | None = None
     frequency_per_day: int | None = None
     unmatched: list[str] = Field(default_factory=list)
-    notes: list[InlineNote] = Field(default_factory=list)
+    notes: list[InlineNote | dict[str, Any] | str] = Field(default_factory=list)
     dangling_concept_ids: list[str] = Field(default_factory=list)
 
 
@@ -282,7 +282,7 @@ class CommitEntryRequest(BaseModel):
     extraction_method: str | None = None
     asset_path: str | None = None
     meaning_np: str | None = None
-    notes: list[InlineNote] = Field(default_factory=list)
+    notes: list[InlineNote | dict[str, Any] | str] = Field(default_factory=list)
 
 
 class RecordResponse(BaseModel):

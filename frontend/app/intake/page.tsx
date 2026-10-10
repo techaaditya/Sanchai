@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
 import type { IntakeResponse, NormalizedConcept } from "@/lib/contracts";
+import { getApiBaseUrl } from "@/lib/api";
 
 const DEMO_PRESETS = [
   {
@@ -133,7 +134,7 @@ export default function IntakePage() {
     setCommittedEntryId(null);
     startTransition(async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/intake/text", {
+        const response = await fetch(`${getApiBaseUrl()}/api/v1/intake/text`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -179,7 +180,7 @@ export default function IntakePage() {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/patients/patient_ram/entries", {
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/patients/patient_ram/entries`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -122,7 +122,10 @@ def _to_detail(row: sqlite3.Row, lexicon: Lexicon) -> RecordEntryDetail:
     summary = _to_summary(row, lexicon)
     norm = record.hydrate(row["normalized_json"], lexicon)
     notes_raw = json.loads(row["notes_json"]) if row["notes_json"] else []
-    notes = [InlineNote(**n) if isinstance(n, dict) else n for n in notes_raw]
+    notes = [
+        InlineNote(**n) if (isinstance(n, dict) and "message_np" in n and "level" in n) else n
+        for n in notes_raw
+    ]
 
     return RecordEntryDetail(
         **summary.model_dump(),
@@ -282,7 +285,15 @@ def commit_entry(patient_id: str, payload: CommitEntryRequest) -> RecordEntryDet
 
         encoded_norm = record.encode_normalization(payload.normalized.model_dump())
         notes_json = (
-            json.dumps([n.model_dump() for n in payload.notes], ensure_ascii=False)
+            json.dumps(
+                [
+                    n.model_dump()
+                    if hasattr(n, "model_dump")
+                    else (n if isinstance(n, dict) else {"level": "info", "message_np": str(n), "message_en": str(n)})
+                    for n in payload.notes
+                ],
+                ensure_ascii=False,
+            )
             if payload.notes
             else None
         )
