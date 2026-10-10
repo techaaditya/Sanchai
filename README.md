@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo/logo512.svg" width="96" height="96" alt="Sanchai App Logo" />
+  <img src="assets/logo/logo512.svg" width="96" height="96" alt="Sanchai App Logo" />
   <h1>Sanchai (सञ्चै)</h1>
   <p><strong>Zero-Hallucination Nepali Clinical Health Ledger & Multimodal Ingestion Engine</strong></p>
 </div>
@@ -244,6 +244,8 @@ Sanchai/
 │   │   ├── eval.py              # NepClinBench evaluation endpoints
 │   │   └── chatbot.py           # SanchAI EHR multimodal clinical assistant
 │   └── requirements.txt         # Python dependencies
+├── assets/
+│   └── logo/                    # Vector brand identity assets (SVG)
 ├── data/
 │   ├── nepali_clinical_lexicon.json  # 300 curated bilingual clinical concepts
 │   └── nepclinbench_gold.json        # 60 gold-standard clinical evaluation cases
