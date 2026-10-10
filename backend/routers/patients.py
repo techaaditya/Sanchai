@@ -5,7 +5,9 @@ import json
 import sqlite3
 
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query, Response
+import cv2
+import numpy as np
+from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile
 
 from backend.db import session
 from backend.nlp.lexicon import Concept, Lexicon, get_lexicon
@@ -353,6 +355,58 @@ def get_patient_qr_image(patient_id: str) -> Response:
         encodes = f"sanchai://p/{patient['qr_token']}"
         png_bytes = qr.encode_png_bytes(encodes)
         return Response(content=png_bytes, media_type="image/png")
+
+
+@router.post("/qr/decode")
+async def decode_qr_image(file: UploadFile = File(...)) -> dict[str, Any]:
+    """Decode scannable QR code image and resolve patient emergency token."""
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty image file received")
+
+    nparr = np.frombuffer(content, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(status_code=400, detail="Could not decode image format")
+
+    detector = cv2.QRCodeDetector()
+    val, pts, st_code = detector.detectAndDecode(img)
+    if not val:
+        # Fallback 1: Grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        val, pts, st_code = detector.detectAndDecode(gray)
+        if not val:
+            # Fallback 2: Contrast adaptive histogram equalization for camera phone glare
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            eq = clahe.apply(gray)
+            val, pts, st_code = detector.detectAndDecode(eq)
+            if not val:
+                # Fallback 3: Otsu thresholding
+                _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                val, pts, st_code = detector.detectAndDecode(thresh)
+
+    if not val:
+        raise HTTPException(status_code=422, detail="No QR code detected in the uploaded image")
+
+    token = val.strip()
+    if token.startswith("sanchai://p/"):
+        token = token.replace("sanchai://p/", "")
+
+    with session() as con:
+        row = con.execute("SELECT * FROM patients WHERE qr_token = :token", {"token": token}).fetchone()
+        patient_id = row["id"] if row else None
+        patient_name = row["name"] if row else None
+        blood_group = row["blood_group"] if row else None
+
+    return {
+        "success": True,
+        "raw_text": val,
+        "token": token,
+        "patient_id": patient_id,
+        "patient_name": patient_name,
+        "blood_group": blood_group,
+        "emergency_path": f"/emergency/{token}",
+    }
 
 
 @router.get("/patients/{patient_id}/fhir", response_model=FhirBundle)

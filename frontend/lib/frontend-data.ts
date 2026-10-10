@@ -10,6 +10,7 @@ import {
   fetchPatientById,
   fetchPatientRecord,
   fetchPatientQr,
+  getApiBaseUrl,
 } from "@/lib/api";
 
 export async function loadDashboardData() {
@@ -62,7 +63,7 @@ export async function loadPatientData(id: string) {
 
 export async function loadEntryData(id: string) {
   try {
-    const res = await fetch(`http://localhost:8000/api/v1/entries/${id}`, { cache: "no-store" });
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/entries/${id}`, { cache: "no-store" });
     if (res.ok) {
       return await res.json();
     }
@@ -74,7 +75,7 @@ export async function loadEntryData(id: string) {
 
 export async function loadEmergencySummary(token: string) {
   try {
-    const res = await fetch(`http://localhost:8000/api/v1/emergency/${token}`, { cache: "no-store" });
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/emergency/${token}`, { cache: "no-store" });
     if (res.ok) {
       return await res.json();
     }

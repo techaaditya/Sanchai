@@ -172,4 +172,29 @@ export async function postChatbotMessage(formData: FormData): Promise<ChatbotRes
   } catch {
     return null;
   }
+}
+
+export type QrDecodeResult = {
+  success: boolean;
+  raw_text: string;
+  token: string;
+  patient_id?: string | null;
+  patient_name?: string | null;
+  blood_group?: string | null;
+  emergency_path: string;
+};
+
+export async function decodeQrImage(fileOrBlob: File | Blob): Promise<QrDecodeResult | null> {
+  const formData = new FormData();
+  formData.append("file", fileOrBlob, "scan.png");
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/qr/decode`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as QrDecodeResult;
+  } catch {
+    return null;
+  }
 }

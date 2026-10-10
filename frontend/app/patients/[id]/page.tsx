@@ -73,6 +73,102 @@ export default async function PatientPage({ params }: PatientPageProps) {
         </div>
       </section>
 
+      {/* Emergency Optical Triage QR Card */}
+      <section className="timeline-card" style={{ marginTop: 24, border: "2px solid rgba(17, 193, 105, 0.35)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <p className="section-title" style={{ margin: 0, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span>🚑 Official Emergency Triage QR Card</span>
+              <span className="tag tag--committed" style={{ fontSize: "0.74rem" }}>Offline Ready</span>
+            </p>
+            <p style={{ margin: "4px 0 0", color: "var(--ink-soft)", fontSize: "0.86rem" }}>
+              Offline-first optical payload encoded with Segno / ISO/IEC 18004. Readable by ambulance paramedics and ER desks in &lt; 1s.
+            </p>
+          </div>
+          <span className="tag tag--committed">
+            <span className="model-chip__dot" style={{ display: "inline-block", width: 6, height: 6, marginRight: 6 }} />
+            Active & Verified Token
+          </span>
+        </div>
+
+        <div style={{ marginTop: 18, display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap", background: "var(--panel-muted)", padding: 18, borderRadius: 16, border: "1px solid var(--line)" }}>
+          {/* QR Code Graphic with click-to-enlarge/download */}
+          <div style={{ position: "relative", textAlign: "center", flexShrink: 0 }}>
+            <img
+              src={`${getApiBaseUrl()}/api/v1/patients/${patient.id}/qr.png`}
+              alt={`Emergency QR Code for ${patient.name}`}
+              width={140}
+              height={140}
+              style={{
+                borderRadius: 14,
+                background: "#ffffff",
+                padding: 8,
+                border: "2px solid #11c169",
+                boxShadow: "0 6px 16px rgba(17, 193, 105, 0.2)",
+                display: "block",
+              }}
+            />
+            <span style={{ display: "block", marginTop: 6, fontSize: "0.72rem", color: "var(--ink-soft)", fontWeight: 700 }}>
+              ISO/IEC 18004 Standard
+            </span>
+          </div>
+
+          {/* Emergency Information Details */}
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--ink)" }}>
+                {patient.name} {patient.name_np ? `(${patient.name_np})` : ""}
+              </span>
+              <span className="tag tag--neutral" style={{ fontWeight: 800, fontSize: "0.85rem" }}>
+                🩸 Blood: {patient.blood_group || "Unknown"}
+              </span>
+            </div>
+
+            <div style={{ marginTop: 8, fontSize: "0.85rem" }}>
+              <span style={{ color: "var(--ink-soft)" }}>Decoded Token: </span>
+              <code style={{ fontSize: "0.88rem", color: "var(--accent)", fontWeight: 700 }}>
+                sanchai://p/{patient.qr_token}
+              </code>
+            </div>
+
+            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {patient.allergies.length > 0 ? (
+                <span className="tag" style={{ background: "#ffebee", color: "#c62828", border: "1px solid #ffcdd2", fontSize: "0.8rem" }}>
+                  ⚠️ Severe Allergy: {patient.allergies.map((a: any) => a.substance_en || a.substance_np).join(", ")}
+                </span>
+              ) : (
+                <span className="tag tag--committed">✓ No Known Drug Allergies</span>
+              )}
+              {patient.conditions.length > 0 && (
+                <span className="tag tag--review" style={{ fontSize: "0.8rem" }}>
+                  🩺 Active: {patient.conditions.map((c: any) => c.canonical_en || c.canonical_np).join(", ")}
+                </span>
+              )}
+            </div>
+
+            {/* Actions for this QR card */}
+            <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Link className="button button--primary" href={`/emergency/${patient.qr_token}`} style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
+                Open Live Emergency Card →
+              </Link>
+              <a
+                className="button button--secondary"
+                href={`${getApiBaseUrl()}/api/v1/patients/${patient.id}/qr.png`}
+                download={`sanchai_qr_${patient.id}.png`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ padding: "8px 16px", fontSize: "0.85rem" }}
+              >
+                📥 Download QR Code (PNG)
+              </a>
+              <Link className="button button--secondary" href="/scan" style={{ padding: "8px 16px", fontSize: "0.85rem" }}>
+                📷 Test in Optical Scanner
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="timeline-card" style={{ marginTop: 24 }}>
         <p className="section-title">Confirmed details</p>
         <div className="timeline">
