@@ -46,7 +46,7 @@ export default async function EmergencyPage({ params }: EmergencyPageProps) {
       <section className="timeline-card" style={{ marginTop: 24 }}>
         <p className="section-title">Emergency highlights</p>
         <div className="timeline">
-          {data.highlights.map((highlight) => (
+          {data.highlights.map((highlight: string) => (
             <article key={highlight} className="timeline-item">
               <p className="timeline-item__summary">{highlight}</p>
             </article>
@@ -55,17 +55,40 @@ export default async function EmergencyPage({ params }: EmergencyPageProps) {
       </section>
 
       <section className="timeline-card" style={{ marginTop: 24 }}>
-        <p className="section-title">Encoded payload</p>
+        <p className="section-title">Encoded Payload & Optical QR</p>
         <div className="timeline">
           <article className="timeline-item">
             <div className="timeline-item__top">
               <span className="timeline-item__label">sanchai://p/{data.qrPayload.qr_token}</span>
-              <span className="tag tag--committed">Ready</span>
+              <span className="tag tag--committed">Scannable</span>
             </div>
             <p className="timeline-item__summary">
-              {data.qrPayload.allergies.join(", ")} · {data.qrPayload.conditions.join(", ")}
+              {data.qrPayload.allergies.join(", ") || "No allergies"} · {data.qrPayload.conditions.join(", ") || "No active conditions"}
             </p>
+            <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 16 }}>
+              <img
+                src={`http://localhost:8000/api/v1/patients/${data.patient.id}/qr.png`}
+                alt="Emergency QR Code"
+                width={110}
+                height={110}
+                style={{ borderRadius: 12, border: "1px solid var(--line)", background: "#fff", padding: 4 }}
+              />
+              <div>
+                <p style={{ margin: "0 0 6px", fontWeight: 700, fontSize: "0.95rem" }}>
+                  Instant Optical Triage
+                </p>
+                <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "0.85rem" }}>
+                  Point any phone camera to verify blood group and critical contraindications offline.
+                </p>
+              </div>
+            </div>
           </article>
+        </div>
+
+        <div className="actions" style={{ marginTop: 20 }}>
+          <a className="button button--primary" href={`/patients/${data.patient.id}`}>
+            View Full Patient Ledger →
+          </a>
         </div>
       </section>
     </DashboardShell>

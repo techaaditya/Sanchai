@@ -166,11 +166,14 @@ export default function IntakePage() {
       extraction_method: result.extraction_method,
       meaning_np: "चिकित्सकीय टिपोट सफलतापूर्वक प्रशोधित गरियो।",
       normalized: {
+        text: result.raw_transcript,
+        prepared_text: result.corrected_text,
         concepts: result.normalized.concepts,
         modifiers: result.normalized.modifiers || [],
         duration_days: result.normalized.duration_days,
         frequency_per_day: result.normalized.frequency_per_day,
         unmatched: result.normalized.unmatched || [],
+        tier_counts: result.normalized.tier_counts || { "1": 1 },
       },
       notes: result.notes || [],
     };

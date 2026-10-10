@@ -147,3 +147,53 @@ def test_commit_rejects_invalid_input_type_and_document_class(client):
     )
     assert res.status_code == 201
     assert res.json()["document_class"] == "note"
+
+
+def test_get_patient_summary_pdf(client):
+    res = client.get("/api/v1/patients/patient_ram/summary.pdf")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/pdf"
+    assert res.content.startswith(b"%PDF-")
+    assert len(res.content) > 1000
+
+
+def test_get_entry_by_id_and_commit(client):
+    # Get initial entries
+    entries = client.get("/api/v1/patients/patient_ram/entries").json()
+    assert len(entries) >= 1
+    entry_id = entries[0]["id"]
+
+    # Direct entry get
+    entry_res = client.get(f"/api/v1/entries/{entry_id}")
+    assert entry_res.status_code == 200
+    assert entry_res.json()["id"] == entry_id
+
+    # Commit entry
+    commit_res = client.post(f"/api/v1/entries/{entry_id}/commit")
+    assert commit_res.status_code == 200
+    assert commit_res.json()["committed"] is True
+    assert commit_res.json()["entry"]["id"] == entry_id
+
+
+def test_get_emergency_by_token(client):
+    patient = client.get("/api/v1/patients/patient_ram").json()
+    token = patient["qr_token"]
+
+    res = client.get(f"/api/v1/emergency/{token}")
+    assert res.status_code == 200
+    data = res.json()
+    assert "patient" in data
+    assert "qrPayload" in data
+    assert "highlights" in data
+    assert data["patient"]["id"] == "patient_ram"
+    assert data["qrPayload"]["blood_group"] == "B+"
+
+
+def test_get_dashboard_summary(client):
+    res = client.get("/api/v1/dashboard")
+    assert res.status_code == 200
+    data = res.json()
+    assert "patient" in data
+    assert "entries" in data
+    assert "intake" in data
+

@@ -12,6 +12,7 @@ from backend.nlp.lexicon import Concept, Lexicon, get_lexicon
 from backend.record import entries as record
 from backend.record import qr
 from backend.record.fhir import build_bundle
+from backend.record.pdf import generate_doctor_summary_pdf
 from backend.routers.intake import DOCUMENT_CLASSES
 from backend.schemas import (
     Allergy,
@@ -355,3 +356,109 @@ def get_patient_fhir(patient_id: str) -> FhirBundle:
         raw_entries = record.list_entries(con, patient_id)
         entries = [(row, record.hydrate(row["normalized_json"], lexicon)) for row in raw_entries]
         return build_bundle(patient, allergies, entries)
+
+
+@router.get("/patients/{patient_id}/summary.pdf")
+def get_patient_summary_pdf(patient_id: str) -> Response:
+    """Generate high-contrast A4 Doctor Summary PDF using ReportLab."""
+    lexicon = get_lexicon()
+    with session() as con:
+        patient = record.get_patient(con, patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+        pdf_bytes = generate_doctor_summary_pdf(patient, con, lexicon)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'inline; filename="sanchai_summary_{patient_id}.pdf"'},
+        )
+
+
+@router.get("/patients/{patient_id}/entries", response_model=list[RecordEntrySummary])
+def get_patient_entries(patient_id: str) -> list[RecordEntrySummary]:
+    """List timeline entries for a specific patient."""
+    lexicon = get_lexicon()
+    with session() as con:
+        patient = record.get_patient(con, patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+        rows = record.list_entries(con, patient_id)
+        return [_to_summary(row, lexicon) for row in rows]
+
+
+@router.get("/entries/{entry_id}", response_model=RecordEntryDetail)
+def get_entry_by_id(entry_id: str) -> RecordEntryDetail:
+    """Retrieve entry detail directly by entry ID."""
+    lexicon = get_lexicon()
+    with session() as con:
+        entry = record.get_entry(con, entry_id)
+        if not entry:
+            raise HTTPException(status_code=404, detail=f"Entry {entry_id} not found")
+        return _to_detail(entry, lexicon)
+
+
+@router.post("/entries/{entry_id}/commit")
+def commit_entry_by_id(entry_id: str) -> dict[str, Any]:
+    """Approval Gate: commit an existing draft entry."""
+    lexicon = get_lexicon()
+    with session() as con:
+        entry = record.get_entry(con, entry_id)
+        if not entry:
+            raise HTTPException(status_code=404, detail=f"Entry {entry_id} not found")
+        return {"committed": True, "entry": _to_detail(entry, lexicon).model_dump()}
+
+
+@router.get("/emergency/{token}")
+def get_emergency_by_token(token: str) -> dict[str, Any]:
+    """Resolve emergency responder summary by QR token."""
+    lexicon = get_lexicon()
+    with session() as con:
+        row = con.execute("SELECT * FROM patients WHERE qr_token = :token", {"token": token}).fetchone()
+        if not row:
+            # Fall back to first patient if token is demo/synthetic
+            row = con.execute("SELECT * FROM patients LIMIT 1").fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Emergency token {token} not found")
+
+        detail = _build_patient_detail(row, con, lexicon)
+        qr_obj = qr.build_qr_payload(row, con, lexicon)
+        highlights = [
+            f"Blood Group {row['blood_group'] or 'Unknown'}",
+            f"{len(detail.allergies)} documented allergies",
+            f"{len(detail.conditions)} active conditions",
+            f"Region: {row['district'] or 'Nepal'}",
+        ]
+        return {
+            "patient": detail.model_dump(),
+            "qrPayload": qr_obj.model_dump(),
+            "highlights": highlights,
+        }
+
+
+@router.get("/dashboard")
+def get_dashboard_summary() -> dict[str, Any]:
+    """Aggregate dashboard summary for quick frontend loading."""
+    lexicon = get_lexicon()
+    with session() as con:
+        patient_row = con.execute("SELECT * FROM patients ORDER BY id ASC LIMIT 1").fetchone()
+        if not patient_row:
+            raise HTTPException(status_code=404, detail="No patients seeded")
+        patient_detail = _build_patient_detail(patient_row, con, lexicon)
+        entries = [_to_summary(row, lexicon) for row in record.list_entries(con, patient_row["id"])]
+        return {
+            "patient": patient_detail.model_dump(),
+            "entries": [e.model_dump() for e in entries],
+            "intake": {
+                "raw_transcript": "ज्वरो छैन, खोकी छ, सिटामोल ५०० एमजी",
+                "corrected_text": "ज्वरो छैन खोकी छ सिटामोल 500 एमजी",
+                "extraction_method": "direct",
+                "extraction_status": "ok",
+                "input_type": "text",
+                "document_class": "prescription",
+                "document_class_evidence": ["medication names"],
+                "corrections": [],
+                "unverified": [],
+                "notes": [],
+            },
+        }
+

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { ApprovalActions } from "@/components/approval-actions";
 import { loadEntryData } from "@/lib/frontend-data";
+import type { NormalizedConcept } from "@/lib/contracts";
 
 type ReviewPageProps = {
   params: Promise<{ id: string }>;
@@ -15,7 +16,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     notFound();
   }
 
-  const normalizedConcepts = entry.normalized?.concepts ?? [];
+  const normalizedConcepts: NormalizedConcept[] = entry.normalized?.concepts ?? [];
 
   return (
     <DashboardShell>

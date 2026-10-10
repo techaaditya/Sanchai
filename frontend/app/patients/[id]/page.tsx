@@ -45,10 +45,26 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </article>
           </div>
 
-          <div className="actions" style={{ marginTop: 24 }}>
+          <div className="actions" style={{ marginTop: 24, alignItems: "center" }}>
             <Link className="button button--primary" href={`/emergency/${patient.qr_token}`}>
               Open emergency summary
             </Link>
+            <a
+              className="button button--secondary"
+              href={`http://localhost:8000/api/v1/patients/${patient.id}/summary.pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📄 Download Doctor Summary PDF
+            </a>
+            <a
+              className="button button--secondary"
+              href={`http://localhost:8000/api/v1/patients/${patient.id}/fhir`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ⚡ View HL7 FHIR R4 Bundle
+            </a>
           </div>
         </div>
       </section>

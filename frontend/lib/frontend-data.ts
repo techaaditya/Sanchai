@@ -61,12 +61,27 @@ export async function loadPatientData(id: string) {
 }
 
 export async function loadEntryData(id: string) {
+  try {
+    const res = await fetch(`http://localhost:8000/api/v1/entries/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // fallback
+  }
   return getEntryById(id);
 }
 
 export async function loadEmergencySummary(token: string) {
+  try {
+    const res = await fetch(`http://localhost:8000/api/v1/emergency/${token}`, { cache: "no-store" });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // fallback
+  }
   const overview = getEmergencySummary();
-  // Support both mock token and seeded token
   if (overview.qrPayload.qr_token === token || token.length >= 8) {
     return overview;
   }

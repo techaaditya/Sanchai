@@ -77,9 +77,9 @@ class NormalizeRequest(BaseModel):
 
 
 class NormalizeResponse(BaseModel):
-    text: str
-    prepared_text: str
-    concepts: list[NormalizedConcept]
+    text: str = ""
+    prepared_text: str = ""
+    concepts: list[NormalizedConcept] = Field(default_factory=list)
     modifiers: list[NormalizedConcept] = Field(
         default_factory=list,
         description="Body sites, durations, and negation markers"
