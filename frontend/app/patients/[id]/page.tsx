@@ -50,6 +50,9 @@ export default async function PatientPage({ params }: PatientPageProps) {
             <Link className="button button--primary" href={`/emergency/${patient.qr_token}`}>
               Open emergency summary
             </Link>
+            <Link className="button button--secondary" href={`/chatbot?patient=${patient.id}`}>
+              💬 Consult SanchAI Assistant
+            </Link>
             <a
               className="button button--secondary"
               href={`${getApiBaseUrl()}/api/v1/patients/${patient.id}/summary.pdf`}

@@ -119,4 +119,57 @@ export async function runLiveEval(useModel = false, limit?: number): Promise<Eva
 
 export async function fetchEvalRuns(): Promise<Array<{ run_id: string; created_at: string; total: number; exact: number }> | null> {
   return fetchJson<Array<{ run_id: string; created_at: string; total: number; exact: number }>>("/api/v1/eval/runs");
+}
+
+export type ChatbotPatient = {
+  id: string;
+  name: string;
+  name_np?: string | null;
+  sanchai_id: string;
+  blood_group?: string | null;
+  district?: string | null;
+  allergies: string[];
+  conditions: string[];
+};
+
+export type ChatbotResponse = {
+  reply: string;
+  patient_id?: string | null;
+  patient_name?: string | null;
+  safety_alerts: string[];
+  attachment?: {
+    filename: string;
+    document_class: string;
+    raw_text: string;
+    concepts: Array<{
+      canonical_en: string;
+      canonical_np: string;
+      type: string;
+      surface: string;
+      negated: boolean;
+      tier: number;
+    }>;
+  } | null;
+  suggested_prompts: string[];
+};
+
+export async function fetchChatbotPatients(): Promise<ChatbotPatient[] | null> {
+  return fetchJson<ChatbotPatient[]>("/api/v1/chatbot/patients");
+}
+
+export async function fetchChatbotContext(patientId: string): Promise<Record<string, unknown> | null> {
+  return fetchJson<Record<string, unknown>>(`/api/v1/chatbot/context/${patientId}`);
+}
+
+export async function postChatbotMessage(formData: FormData): Promise<ChatbotResponse | null> {
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/chatbot/message`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ChatbotResponse;
+  } catch {
+    return null;
+  }
 }

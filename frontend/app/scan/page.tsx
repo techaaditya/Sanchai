@@ -75,76 +75,54 @@ export default function ScanPage() {
 
       {/* Viewfinder and Token Input */}
       <section className="timeline-card" style={{ marginTop: 24 }}>
-        <p className="section-title">Scanner Viewfinder</p>
-        <div
-          style={{
-            position: "relative",
-            minHeight: 260,
-            borderRadius: 20,
-            background: "linear-gradient(180deg, #1e1a17 0%, #2e2620 100%)",
-            color: "#fff",
-            padding: 24,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            border: "2px dashed var(--accent)",
-            overflow: "hidden",
-          }}
-        >
+        <p className="section-title">Optical Scanner Viewfinder</p>
+        <div className="scanner-viewfinder">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.88rem", color: "#e7ddd1", fontWeight: 700 }}>
-              {isSimulating ? "⚡ DECODING OPTICAL PAYLOAD..." : "TARGET QR WITHIN FRAME"}
+            <span style={{ fontSize: "0.88rem", color: "var(--ink)", fontWeight: 700, letterSpacing: "0.04em" }}>
+              {isSimulating ? "⚡ DECODING OPTICAL HEALTH PAYLOAD..." : "ALIGN QR CODE WITHIN SENSOR TARGET"}
             </span>
-            <span className="tag tag--committed" style={{ background: "rgba(31, 138, 91, 0.3)", color: "#7eedbe" }}>
-              Ready
+            <span className="tag tag--committed">
+              <span className="model-chip__dot" style={{ display: "inline-block", width: 6, height: 6, marginRight: 6 }} />
+              Sensor Active
             </span>
           </div>
 
-          <div style={{ textAlign: "center", margin: "20px 0" }}>
-            <div
-              style={{
-                display: "inline-block",
-                padding: "16px 28px",
-                borderRadius: 16,
-                background: "rgba(255, 255, 255, 0.08)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-              }}
-            >
-              <p style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, letterSpacing: "0.05em" }}>
-                [ ⛶ CAMERA SENSOR VIEWPORT ]
+          <div className="scanner-viewport-box">
+            {/* 4 Optical Corner Reticles */}
+            <div className="scanner-corner scanner-corner--tl" />
+            <div className="scanner-corner scanner-corner--tr" />
+            <div className="scanner-corner scanner-corner--bl" />
+            <div className="scanner-corner scanner-corner--br" />
+
+            {/* Animated Laser Sweep Line */}
+            <div className="scanner-laser" />
+
+            <div style={{ padding: "8px 0" }}>
+              <p style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "var(--ink)", letterSpacing: "0.04em" }}>
+                [ ⛶ OPTICAL CAMERA SENSOR ]
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#e7ddd1" }}>
-                High-contrast Segno QR reader for ambulances & triage
+              <p style={{ margin: "6px 0 0", fontSize: "0.85rem", color: "var(--ink-soft)" }}>
+                High-contrast Segno QR reader for ambulance triage desks & ER responders
               </p>
             </div>
           </div>
 
           {/* Quick Input Box */}
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
             <input
               type="text"
               placeholder="Paste token or sanchai://p/[token]..."
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              style={{
-                flex: 1,
-                minWidth: 240,
-                padding: "12px 18px",
-                borderRadius: 999,
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                background: "rgba(255, 255, 255, 0.15)",
-                color: "#fff",
-                fontSize: "0.95rem",
-              }}
+              className="scanner-input"
             />
             <button
               className="button button--primary"
-              style={{ background: "var(--accent)", color: "#fff" }}
               type="button"
               onClick={() => handleScan(tokenInput)}
               disabled={isSimulating}
             >
-              {isSimulating ? "Decoding..." : "Scan & Open Emergency Card"}
+              {isSimulating ? "Decoding..." : "Scan & Open Emergency Card →"}
             </button>
           </div>
         </div>

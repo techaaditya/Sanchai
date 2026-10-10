@@ -8,25 +8,31 @@
 ## 🎯 Key Differentiators & Clinical Capabilities
 
 1. **Deterministic 3-Tier Clinical Normalization:**
-   - **Tier 1 (Exact Match):** Direct sub-millisecond mapping across Devanagari, Romanized phonetics, and Latin brand aliases in the 261-concept clinical lexicon (`data/nepali_clinical_lexicon.json`).
+   - **Tier 1 (Exact Match):** Direct sub-millisecond mapping across Devanagari, Romanized phonetics, and Latin brand aliases in the **300-concept clinical lexicon** (`data/nepali_clinical_lexicon.json`), verified against official sources: **Nepal Department of Drug Administration (DDA)**, **National List of Essential Medicines (NLEM 2021)**, and **WHO ICD-11**.
    - **Tier 2 (Orthographic / Matra Fuzzy):** Levenshtein distance bounded by strict edit-budgets, recovering OCR-corrupted vowel signs (*"ज्वरौ"* $\rightarrow$ *ज्वरो*).
    - **Tier 3 (Gemma 4 Guardrail):** Constrained candidate selection using `gemma4:31b-cloud` (via Ollama Cloud API) restricted strictly to registered lexicon IDs with negative rejection.
-2. **Brand-to-Generic Pharmacology Resolution:**
-   - Automatically translates everyday brand prescriptions (*Cetamol* $\rightarrow$ *Paracetamol*, *Taxim-O* $\rightarrow$ *Cefixime*, *Cifran* $\rightarrow$ *Ciprofloxacin*, *Pantocid* $\rightarrow$ *Pantoprazole*), preventing duplicate dosing and dangerous drug interactions across fragmented health visits.
-3. **Directional Negation Detection (Zero False Positives):**
+2. **SanchAI (सञ्चै एआई) — Grounded EHR Multimodal Clinical Assistant:**
+   - Deeply integrated conversational health intelligence powered by `gemma4:31b-cloud`.
+   - **Longitudinal EHR Grounding:** Full context awareness of the patient's verified allergies, active conditions, medications, and timeline encounters.
+   - **Multimodal Attachment Ingestion:** Upload PDF diagnostic reports or prescription photos for instant PyMuPDF text extraction, Vision OCR, and clinical concept normalization.
+   - **Real-Time Safety & Contraindication Alerts:** Rule-based and semantic cross-referencing detecting severe allergy risks (e.g., Penicillin allergy vs. beta-lactam derivatives like Amoxicillin or Augmentin).
+   - **Pre-Visit Doctor Summaries:** One-click preparation synthesizing recent vitals, complaints, and questions for physicians.
+3. **Brand-to-Generic Pharmacology Resolution:**
+   - Automatically translates everyday brand prescriptions (*Cetamol* $\rightarrow$ *Paracetamol*, *Taxim-O* $\rightarrow$ *Cefixime*, *Cifran* $\rightarrow$ *Ciprofloxacin*, *Pantocid* $\rightarrow$ *Pantoprazole*, *Flagyl* $\rightarrow$ *Metronidazole*, *Telma* $\rightarrow$ *Telmisartan*), preventing duplicate dosing and dangerous drug interactions across fragmented health visits.
+4. **Directional Negation Detection (Zero False Positives):**
    - Automatically recognizes Nepali negation markers (*"छैन"*, *"hoina"*, *"bina"*). Denied symptoms (e.g., *"ज्वरो छैन"* $\rightarrow$ Fever: Negated) are strictly excluded from active patient conditions.
-4. **Approval-Before-Write Gate:**
+5. **Approval-Before-Write Gate:**
    - Human-in-the-loop safety protocol: No AI output writes directly to authoritative patient health records without explicit clinician/patient review and confirmation.
-5. **Multimodal Intake (Zero Cloud Latency for Digital Assets):**
+6. **Multimodal Intake (Zero Cloud Latency for Digital Assets):**
    - **Digital PDFs & Lab Reports:** Extracted instantly via PyMuPDF.
    - **Handwritten Prescriptions & Clinic Slips:** Vision OCR transcription via `gemma4:31b-cloud`.
    - **Bilingual Text & Romanized Notes:** Processed instantly via the 3-tier normalization engine.
    - *(Note: Voice intake is strictly de-scoped for future roadmap).*
-6. **Clinical Standards & Interoperability:**
+7. **Clinical Standards & Interoperability:**
    - **HL7 FHIR R4 Bundle:** Generates valid FHIR Collection Bundles (strictly excluding negated findings).
    - **A4 Doctor Summary PDF:** One-click print-ready clinical report generated via ReportLab with embedded Segno QR code.
    - **Emergency Health QR:** High-contrast Segno QR token (`sanchai://p/{token}`) allowing paramedics and triage desks to inspect blood group and severe allergies offline.
-7. **NepClinBench 60-Item Evaluation Suite:**
+8. **NepClinBench 60-Item Evaluation Suite:**
    - Gold-standard benchmark measuring **96.7% Exact Set Match (58/60)**, **1.000 Precision (0% Hallucination)**, and **100% Negation Accuracy (10/10)**.
 
 ---
@@ -159,9 +165,10 @@ The application is now accessible at:
 | Route | Purpose & Clinical Actions |
 | :--- | :--- |
 | **`http://localhost:3000/`** | **Home & Health Dashboard:** Overview metrics, patient ledger count, operating modes, and quick launch links. |
+| **`http://localhost:3000/chatbot`** | **SanchAI Multimodal EHR Assistant:**<br>• Real-time conversational AI grounded in patient longitudinal health history.<br>• Attachment staging & interpretation for PDF lab reports and prescription photos.<br>• Real-time allergy contraindication warnings (e.g., Penicillin cross-reactivity).<br>• Pre-visit doctor summary generation with actionable patient briefing.<br>• Plain Nepali/English medical explanations. |
 | **`http://localhost:3000/intake`** | **Intake Studio & Approval Gate:**<br>• Try demo presets (Prescription slip, clinic note with negation, printed lab report).<br>• Real-time 3-tier concept extraction badges (Tier 1 exact, Tier 2 fuzzy, Tier 3 Gemma 4).<br>• Drug brand-to-generic mapping indicator.<br>• **Approve & Commit to Patient Record** button: writes verified record to patient ledger. |
-| **`http://localhost:3000/patients/patient_ram`** | **Longitudinal Patient Ledger:**<br>• Demographics, blood group, allergies safety alert, active conditions.<br>• Chronological clinical encounters timeline.<br>• 📄 **Download Doctor Summary PDF** button (`GET /api/v1/patients/{id}/summary.pdf`).<br>• ⚡ **View HL7 FHIR R4 Bundle** button (`GET /api/v1/patients/{id}/fhir`).<br>• 🚨 **Open Emergency Summary** link. |
-| **`http://localhost:3000/scan`** | **Emergency QR Scanner Simulator:**<br>• Camera viewfinder simulation with corner targeting.<br>• One-click demo buttons for preloaded patients (Ram Bahadur, Sita Kumari, Hari Prasad).<br>• Direct token input and optical triage decoder. |
+| **`http://localhost:3000/patients/patient_ram`** | **Longitudinal Patient Ledger:**<br>• Demographics, blood group, allergies safety alert, active conditions.<br>• Chronological clinical encounters timeline.<br>• 💬 **Consult SanchAI Assistant** quick launch button.<br>• 📄 **Download Doctor Summary PDF** button (`GET /api/v1/patients/{id}/summary.pdf`).<br>• ⚡ **View HL7 FHIR R4 Bundle** button (`GET /api/v1/patients/{id}/fhir`).<br>• 🚨 **Open Emergency Summary** link. |
+| **`http://localhost:3000/scan`** | **Emergency QR Scanner Simulator:**<br>• Precision optical viewfinder styled with warm clinical aesthetics and corner reticles.<br>• Animated emerald laser sweep line.<br>• One-click demo buttons for preloaded patients (Ram Bahadur, Maya Tamang, Sita Karki).<br>• Direct token input and optical triage decoder. |
 | **`http://localhost:3000/emergency/[token]`** | **First-Responder Emergency Triage View:**<br>• High-contrast optical QR code rendered via Segno.<br>• Immediate offline triage: blood group, severe allergies, and contraindicated medications. |
 | **`http://localhost:3000/evidence`** | **NepClinBench Evaluation Dashboard:**<br>• Run live 60-item clinical benchmark evaluation in one click.<br>• Real-time accuracy breakdown across condition, symptom, medication, and anatomy concepts.<br>• Full ablation table comparing Sanchai 3-Tier against raw Gemma 4 baseline. |
 
@@ -169,18 +176,18 @@ The application is now accessible at:
 
 ## 🧪 Automated Testing & Verification
 
-### Run Backend Unit & Integration Tests (48 Tests)
+### Run Backend Unit & Integration Tests (54 Tests)
 ```bash
 python -m pytest
 ```
-*Expected: 48 passed (tests database seeding, FHIR bundling, intake normalization, approval-before-write gate, and emergency QR generation).*
+*Expected: 54 passed across all test suites (tests database seeding, SanchAI EHR chatbot, FHIR bundling, intake normalization, approval-before-write gate, and emergency QR generation).*
 
 ### Run Frontend Production Build & TypeScript Typecheck
 ```bash
 cd frontend
 npm run build
 ```
-*Expected: Compiled successfully with 0 errors across all 7 routes.*
+*Expected: Compiled successfully with 0 errors across all 8 routes (`/`, `/chatbot`, `/emergency/[token]`, `/evidence`, `/intake`, `/patients/[id]`, `/review/[id]`, `/scan`).*
 
 ---
 

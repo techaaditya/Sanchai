@@ -9,6 +9,7 @@ export function NavHeader() {
   const links = [
     { href: "/", label: "Home", badge: null },
     { href: "/intake", label: "Intake Studio", badge: "Live" },
+    { href: "/chatbot", label: "SanchAI", badge: "AI" },
     { href: "/patients/patient_ram", label: "Patient Record", badge: null },
     { href: "/scan", label: "QR Scanner", badge: null },
     { href: "/evidence", label: "NepClinBench Evidence", badge: "96.7%" },
