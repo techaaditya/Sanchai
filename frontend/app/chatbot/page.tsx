@@ -166,17 +166,34 @@ function ChatbotContent() {
       <section className="panel panel--paper">
         <div className="panel__inner">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-            <div>
-              <span className="eyebrow">
-                <span className="model-chip__dot" style={{ display: "inline-block", width: 6, height: 6, marginRight: 6 }} />
-                Grounded EHR Intelligence · SanchAI
-              </span>
-              <h1 className="title" style={{ fontSize: "clamp(2rem, 4vw, 3.8rem)" }}>
-                SanchAI Clinical Assistant
-              </h1>
-              <p className="lede">
-                Longitudinal record-grounded AI assistant powered by <code>gemma4:31b-cloud</code>. Ingests prescription photos, lab PDFs, cross-checks allergies, and generates doctor pre-visit briefings.
-              </p>
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+              <img
+                src="/logo512.svg"
+                alt="SanchAI Assistant"
+                width={52}
+                height={52}
+                style={{
+                  borderRadius: 14,
+                  background: "#ffffff",
+                  padding: 6,
+                  border: "1.5px solid rgba(17, 193, 105, 0.28)",
+                  boxShadow: "0 4px 14px rgba(17, 193, 105, 0.16)",
+                  flexShrink: 0,
+                  marginTop: 4,
+                }}
+              />
+              <div>
+                <span className="eyebrow">
+                  <span className="model-chip__dot" style={{ display: "inline-block", width: 6, height: 6, marginRight: 6 }} />
+                  Grounded EHR Intelligence · SanchAI
+                </span>
+                <h1 className="title" style={{ fontSize: "clamp(2rem, 4vw, 3.8rem)" }}>
+                  SanchAI Clinical Assistant
+                </h1>
+                <p className="lede">
+                  Longitudinal record-grounded AI assistant powered by <code>gemma4:31b-cloud</code>. Ingests prescription photos, lab PDFs, cross-checks allergies, and generates doctor pre-visit briefings.
+                </p>
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>

@@ -18,8 +18,16 @@ export function NavHeader() {
   return (
     <header className="nav-header">
       <div className="nav-header__inner">
-        <Link href="/" className="nav-header__brand">
-          <span className="brand-logo">स</span>
+        <Link href="/" className="nav-header__brand" title="Sanchai (सञ्चै) Home">
+          <div className="brand-logo-container">
+            <img
+              src="/logo512.svg"
+              alt="Sanchai Logo"
+              className="brand-logo-img"
+              width={34}
+              height={34}
+            />
+          </div>
           <div className="brand-text">
             <span className="brand-name">Sanchai</span>
             <span className="brand-sub">सञ्चै · Clinical Health Ledger</span>

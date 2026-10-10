@@ -316,6 +316,34 @@ textarea {
   text-decoration: none;
 }
 
+.brand-logo-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid rgba(17, 193, 105, 0.28);
+  box-shadow: 0 2px 10px rgba(17, 193, 105, 0.16);
+  padding: 5px;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-header__brand:hover .brand-logo-container {
+  transform: translateY(-1px) scale(1.05);
+  border-color: #11c169;
+  box-shadow: 0 4px 14px rgba(17, 193, 105, 0.32);
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .brand-logo {
   display: inline-flex;
   align-items: center;

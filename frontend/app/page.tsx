@@ -9,7 +9,29 @@ export default async function HomePage() {
       <section className="hero">
         <div className="panel panel--paper">
           <div className="panel__inner">
-            <span className="eyebrow">Phase 1 · frontend shell</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14, flexWrap: "wrap" }}>
+              <img
+                src="/logo512.svg"
+                alt="Sanchai App Logo"
+                width={48}
+                height={48}
+                style={{
+                  borderRadius: 14,
+                  background: "#ffffff",
+                  padding: 6,
+                  border: "1.5px solid rgba(17, 193, 105, 0.28)",
+                  boxShadow: "0 4px 14px rgba(17, 193, 105, 0.16)",
+                  flexShrink: 0,
+                }}
+              />
+              <div>
+                <span className="eyebrow" style={{ margin: 0 }}>Clinical Health Ledger · Zero-Hallucination AI</span>
+                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                  <span>Sanchai (सञ्चै)</span>
+                  <span className="tag tag--committed" style={{ fontSize: "0.74rem" }}>Verified Nepal DDA</span>
+                </div>
+              </div>
+            </div>
             <h1 className="title">Paper in. Structure out.</h1>
             <p className="lede">
               Sanchai turns Nepali clinical input into a reviewed, longitudinal record.

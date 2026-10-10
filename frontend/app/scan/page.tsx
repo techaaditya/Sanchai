@@ -47,7 +47,28 @@ export default function ScanPage() {
     <DashboardShell>
       <section className="panel panel--paper">
         <div className="panel__inner">
-          <span className="eyebrow">Emergency QR Scanner</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+            <img
+              src="/logo512.svg"
+              alt="Sanchai QR Logo"
+              width={46}
+              height={46}
+              style={{
+                borderRadius: 12,
+                background: "#ffffff",
+                padding: 5,
+                border: "1.5px solid rgba(17, 193, 105, 0.28)",
+                boxShadow: "0 2px 10px rgba(17, 193, 105, 0.16)",
+                flexShrink: 0,
+              }}
+            />
+            <div>
+              <span className="eyebrow" style={{ margin: 0 }}>Emergency QR Scanner</span>
+              <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
+                Sanchai Optical Triage Token
+              </div>
+            </div>
+          </div>
           <h1 className="title" style={{ fontSize: "clamp(2rem, 4vw, 3.8rem)" }}>
             Emergency QR Lookup
           </h1>

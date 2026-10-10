@@ -5,7 +5,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Sanchai (सञ्चै) — Clinical Health Ledger",
-  description: "Zero-hallucination bilingual Nepali clinical intake and longitudinal health ledger."
+  description: "Zero-hallucination bilingual Nepali clinical intake and longitudinal health ledger.",
+  icons: {
+    icon: "/logo512.svg",
+    shortcut: "/logo512.svg",
+    apple: "/logo512.svg",
+  },
 };
 
 export default function RootLayout({

@@ -1,5 +1,8 @@
-# Sanchai (सञ्चै)
-### Zero-Hallucination Nepali Clinical Health Ledger & Multimodal Ingestion Engine
+<div align="center">
+  <img src="logo/logo512.svg" width="96" height="96" alt="Sanchai App Logo" />
+  <h1>Sanchai (सञ्चै)</h1>
+  <p><strong>Zero-Hallucination Nepali Clinical Health Ledger & Multimodal Ingestion Engine</strong></p>
+</div>
 
 **Sanchai (सञ्चै)** — named after the warm Nepali greeting *"सञ्चै हुनुहुन्छ?"* (*"Are you well?"*) — is a clinically grounded personal health ledger system designed specifically for Nepal's healthcare ecosystem. It ingests handwritten doctor prescriptions, bilingual clinic notes, and digital lab reports, converting them into structured, longitudinal medical histories with **zero hallucinations** on verified clinical entities.
 
