@@ -51,14 +51,26 @@
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Technology Stack & Dual-Tier AI Architecture
 
-- **AI Model:** `gemma4:31b-cloud` (Ollama Cloud API)
+- **Primary Cloud Model:** `gemma4:31b-cloud` (Ollama Cloud API) — high-capacity multimodal clinical comprehension, doctor summaries, and prescription OCR.
+- **Offline-First Edge Fallback:** `gemma4:e2b-it-qat` (quantized local Ollama instance) — enables full offline clinical assistant and OCR capability in rural health posts and disaster triage where internet connectivity is severed.
 - **Backend Framework:** FastAPI, Uvicorn, Python 3.11+ / 3.13
 - **Data Persistence:** SQLite (`data/sanchai.db`), Pydantic v2
 - **Document & Clinical Engines:** PyMuPDF, ReportLab, Segno, `fhir.resources`
 - **Frontend Architecture:** Next.js 15 (App Router), TypeScript, Vanilla CSS design tokens
-- **Ontology Core:** Curated 261-concept bilingual clinical ontology (`data/nepali_clinical_lexicon.json`)
+- **Ontology Core:** Curated 300-concept bilingual clinical ontology (`data/nepali_clinical_lexicon.json`) verified against Nepal DDA, NLEM 2021, and WHO ICD-11.
+
+---
+
+## 🏔️ The Pitch: Why Offline-First Architecture Matters in Nepal
+
+> **"A digital health system in Nepal that fails when the internet cuts out is a health system that fails when it is needed most."**
+
+In Nepal, district health posts, mountain clinics, and ambulance response teams frequently operate under intermittent power and fiber outages. Sanchai solves this through a **3-layer resilience ladder**:
+1. **Deterministic Core (< 5ms latency):** Tier 1 (exact matching) and Tier 2 (orthographic matra fuzzy matching) run 100% locally with zero network requirement.
+2. **Cloud Acceleration:** When online, the system leverages high-capacity `gemma4:31b-cloud` for complex prescription handwriting OCR and pre-visit synthesis.
+3. **Automatic Edge Fallback:** If cloud latency spikes or internet drops, Sanchai seamlessly routes inference to `gemma4:e2b-it-qat` running on the local device, guaranteeing zero disruption for clinicians and patients.
 
 ---
 
@@ -71,7 +83,7 @@ Create a `.env` file in the project root (copied from `.env.example`):
 cp .env.example .env
 ```
 
-Ensure your `.env` contains your Ollama Cloud credentials:
+Ensure your `.env` contains your Ollama Cloud credentials and optional local fallback:
 
 ```dotenv
 # Backend Configuration
@@ -81,6 +93,10 @@ OLLAMA_CLOUD_URL=https://ollama.com
 MODEL_NAME=gemma4:31b-cloud
 OLLAMA_API_KEY=your_actual_ollama_api_key_here
 DB_PATH=./data/sanchai.db
+
+# Offline-First Edge Fallback Model (Local Ollama for rural clinics)
+OLLAMA_URL=http://localhost:11434
+LOCAL_GEMMA_MODEL=gemma4:e2b-it-qat
 
 # Frontend Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1

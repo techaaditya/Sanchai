@@ -123,6 +123,24 @@ class GemmaTier3Matcher:
                         data = res.json()
                         return parse_response(data.get("response", ""), candidates)
         except Exception:
-            # Degrade gracefully to preserve deterministic tiers
-            return None
+            pass
+
+        # Edge fallback: Try local Ollama with gemma4:e2b-it-qat if cloud was primary and failed
+        if settings.resolved_backend == "cloud":
+            try:
+                local_url = f"{settings.ollama_url.rstrip('/')}/api/generate"
+                local_payload = {
+                    "model": settings.fallback_model_name,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.0},
+                }
+                with httpx.Client(timeout=REQUEST_TIMEOUT_SECONDS) as client:
+                    res = client.post(local_url, json=local_payload)
+                    if res.status_code == 200:
+                        data = res.json()
+                        return parse_response(data.get("response", ""), candidates)
+            except Exception:
+                pass
+
         return None

@@ -107,14 +107,20 @@ api = APIRouter(prefix="/api/v1")
 @api.get("/health")
 async def health() -> dict[str, object]:
     model_probe_url = f"{settings.model_base_url}/api/tags"
+    local_probe_url = f"{settings.ollama_url.rstrip('/')}/api/tags"
     async with httpx.AsyncClient() as client:
         remote = await asyncio.gather(
             _probe_remote(
                 client,
-                "gemma_model",
+                "primary_model",
                 model_probe_url,
                 headers=settings.model_headers,
-            )
+            ),
+            _probe_remote(
+                client,
+                "fallback_model",
+                local_probe_url,
+            ),
         )
 
     db_status = _probe_db()
@@ -128,6 +134,7 @@ async def health() -> dict[str, object]:
         "service": "sanchai-api",
         "model_backend": settings.resolved_backend,
         "model": settings.active_model_name,
+        "fallback_model": settings.fallback_model_name,
         "services": services,
     }
 

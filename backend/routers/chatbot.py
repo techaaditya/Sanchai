@@ -6,7 +6,7 @@ Multimodal EHR chatbot capable of:
 3. Allergy and drug-drug contraindication safety risk checks.
 4. Pre-visit doctor summary generation with actionable patient briefing.
 5. Explaining medical jargon and laboratory results in plain Nepali and English.
-6. Powered by gemma4:31b-cloud (Ollama Cloud API) with robust offline fallback.
+6. Powered by gemma4:31b-cloud (Ollama Cloud API) with robust local offline edge fallback (gemma4:e2b-it-qat).
 """
 
 from __future__ import annotations

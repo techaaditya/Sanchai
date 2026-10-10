@@ -30,9 +30,9 @@ class Settings(BaseSettings):
     gemma_cloud_model: str = "gemma4:31b-cloud"
     ollama_api_key: str = ""
 
-    # Local Ollama URL (fallback or offline development)
+    # Local Ollama URL (offline edge fallback model for rural clinics)
     ollama_url: str = "http://localhost:11434"
-    local_gemma_model: str = "gemma4:31b-cloud"
+    local_gemma_model: str = "gemma4:e2b-it-qat"
 
     # Database & Data asset paths
     db_path: str = "./data/sanchai.db"
@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     @property
     def active_model_name(self) -> str:
         return self.model_name or self.gemma_cloud_model
+
+    @property
+    def fallback_model_name(self) -> str:
+        return self.local_gemma_model or "gemma4:e2b-it-qat"
 
     @property
     def model_headers(self) -> dict[str, str]:

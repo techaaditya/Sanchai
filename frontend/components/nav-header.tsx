@@ -8,11 +8,11 @@ export function NavHeader() {
 
   const links = [
     { href: "/", label: "Home", badge: null },
-    { href: "/intake", label: "Intake Studio", badge: "Live" },
+    { href: "/intake", label: "Intake", badge: "Live" },
     { href: "/chatbot", label: "SanchAI", badge: "AI" },
-    { href: "/patients/patient_ram", label: "Patient Record", badge: null },
+    { href: "/patients/patient_ram", label: "Patients", badge: null },
     { href: "/scan", label: "QR Scanner", badge: null },
-    { href: "/evidence", label: "NepClinBench Evidence", badge: "96.7%" },
+    { href: "/evidence", label: "Evidence", badge: "96.7%" },
   ];
 
   return (
@@ -48,10 +48,14 @@ export function NavHeader() {
         </nav>
 
         <div className="nav-header__meta">
-          <span className="model-chip" title="Active Model">
+          <div
+            className="model-chip"
+            title="Cloud: gemma4:31b-cloud (Ollama Cloud) | Edge Fallback: gemma4:e2b-it-qat (Local Ollama)"
+          >
             <span className="model-chip__dot"></span>
-            gemma4:31b-cloud
-          </span>
+            <span className="model-chip__name">gemma4:31b-cloud</span>
+            <span className="model-chip__fallback-tag">offline fallback</span>
+          </div>
         </div>
       </div>
     </header>

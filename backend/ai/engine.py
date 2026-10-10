@@ -34,12 +34,18 @@ TEXT_TIMEOUT_SECONDS = 45.0
 
 
 class GemmaEngine:
-    """Unified engine for clinical document extraction and assistant inference."""
+    """Unified engine for clinical document extraction and assistant inference.
+    
+    Dual-Tier Architecture:
+    - Primary Model: gemma4:31b-cloud (Ollama Cloud API)
+    - Edge / Offline Fallback: gemma4:e2b-it-qat (Quantized local Ollama instance)
+    """
 
     def __init__(self) -> None:
         self.cloud_url = settings.ollama_cloud_url.rstrip("/")
         self.local_url = settings.ollama_url.rstrip("/")
         self.model_name = settings.active_model_name
+        self.fallback_model = settings.fallback_model_name
 
     # --------------------------------------------------------------------------
     # 1. Vision OCR: Prescription & Lab Document Transcription
@@ -48,43 +54,49 @@ class GemmaEngine:
     def transcribe_image(self, image_bytes: bytes, prompt: str | None = None) -> str | None:
         """Extract verbatim Devanagari and Latin text from medical document image.
 
-        Routes to gemma4:31b-cloud with local Ollama fallback if running.
+        Routes to gemma4:31b-cloud with local gemma4:e2b-it-qat Ollama fallback.
         """
         active_prompt = prompt or OCR_TRANSCRIBE_PROMPT
         b64_image = base64.b64encode(image_bytes).decode("ascii")
 
-        payload = {
-            "model": self.model_name,
-            "prompt": active_prompt,
-            "images": [b64_image],
-            "stream": False,
-            "options": {"temperature": 0.0},
-        }
-
-        # 1. Try Primary Cloud Ollama
+        # 1. Try Primary Cloud Ollama (gemma4:31b-cloud)
         api_key = settings.ollama_api_key.strip()
         if api_key:
+            cloud_payload = {
+                "model": self.model_name,
+                "prompt": active_prompt,
+                "images": [b64_image],
+                "stream": False,
+                "options": {"temperature": 0.0},
+            }
             headers = {"Authorization": f"Bearer {api_key}"}
             try:
                 with httpx.Client(timeout=VISION_TIMEOUT_SECONDS) as client:
-                    res = client.post(f"{self.cloud_url}/api/generate", json=payload, headers=headers)
+                    res = client.post(f"{self.cloud_url}/api/generate", json=cloud_payload, headers=headers)
                     if res.status_code == 200:
                         text = res.json().get("response", "").strip()
                         if text:
                             return text
             except Exception as exc:
-                logger.warning("Cloud vision inference failed: %s", exc)
+                logger.warning("Cloud vision inference failed, falling back to local model: %s", exc)
 
-        # 2. Try Local Ollama fallback (if running locally)
+        # 2. Try Local Ollama fallback (gemma4:e2b-it-qat)
+        local_payload = {
+            "model": self.fallback_model,
+            "prompt": active_prompt,
+            "images": [b64_image],
+            "stream": False,
+            "options": {"temperature": 0.0},
+        }
         try:
             with httpx.Client(timeout=VISION_TIMEOUT_SECONDS) as client:
-                res = client.post(f"{self.local_url}/api/generate", json=payload)
+                res = client.post(f"{self.local_url}/api/generate", json=local_payload)
                 if res.status_code == 200:
                     text = res.json().get("response", "").strip()
                     if text:
                         return text
         except Exception as exc:
-            logger.info("Local Ollama vision unavailable: %s", exc)
+            logger.info("Local Ollama vision fallback unavailable: %s", exc)
 
         return None
 
@@ -135,38 +147,43 @@ class GemmaEngine:
     # --------------------------------------------------------------------------
 
     def _generate_text(self, prompt: str, think: bool = False) -> str | None:
-        """Generates text via gemma4:31b-cloud (Ollama Cloud) with local fallback."""
-        payload = {
-            "model": self.model_name,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": 0.0},
-        }
-
-        # 1. Cloud Ollama
+        """Generates text via gemma4:31b-cloud (Ollama Cloud) with local gemma4:e2b-it-qat fallback."""
+        # 1. Cloud Ollama (Primary)
         api_key = settings.ollama_api_key.strip()
         if api_key:
+            cloud_payload = {
+                "model": self.model_name,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.0},
+            }
             headers = {"Authorization": f"Bearer {api_key}"}
             try:
                 with httpx.Client(timeout=TEXT_TIMEOUT_SECONDS) as client:
-                    res = client.post(f"{self.cloud_url}/api/generate", json=payload, headers=headers)
+                    res = client.post(f"{self.cloud_url}/api/generate", json=cloud_payload, headers=headers)
                     if res.status_code == 200:
                         text = res.json().get("response", "").strip()
                         if text:
                             return text
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Cloud generation failed, trying local fallback: %s", exc)
 
-        # 2. Local Ollama fallback
+        # 2. Local Ollama fallback (gemma4:e2b-it-qat)
+        local_payload = {
+            "model": self.fallback_model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": 0.0},
+        }
         try:
             with httpx.Client(timeout=TEXT_TIMEOUT_SECONDS) as client:
-                res = client.post(f"{self.local_url}/api/generate", json=payload)
+                res = client.post(f"{self.local_url}/api/generate", json=local_payload)
                 if res.status_code == 200:
                     text = res.json().get("response", "").strip()
                     if text:
                         return text
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.info("Local Ollama text fallback unavailable: %s", exc)
 
         return None
 
@@ -199,7 +216,9 @@ class GemmaEngine:
 
         return {
             "model_name": self.model_name,
-            "primary_backend": "ollama_cloud (gemma4:31b-cloud)",
+            "fallback_model": self.fallback_model,
+            "primary_backend": f"ollama_cloud ({self.model_name})",
+            "offline_backend": f"ollama_local ({self.fallback_model})",
             "cloud_configured": bool(api_key),
             "cloud_reachable": cloud_up,
             "local_fallback_available": local_up,

@@ -299,19 +299,21 @@ textarea {
 }
 
 .nav-header__inner {
-  max-width: 1240px;
+  max-width: 1380px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
 }
 
 .nav-header__brand {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .brand-logo {
@@ -342,28 +344,39 @@ textarea {
 }
 
 .brand-sub {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   color: var(--ink-soft);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .nav-header__links {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav-header__links::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 6px 12px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--ink-soft);
+  white-space: nowrap;
   transition: all 0.15s ease;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
 .nav-link:hover {
@@ -380,7 +393,7 @@ textarea {
 }
 
 .nav-link__badge {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
@@ -392,19 +405,22 @@ textarea {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .model-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: 999px;
   background: #fff;
   border: 1px solid var(--line);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .model-chip__dot {
@@ -413,6 +429,25 @@ textarea {
   border-radius: 50%;
   background: var(--ok);
   box-shadow: 0 0 0 3px rgba(31, 138, 91, 0.2);
+  flex-shrink: 0;
+}
+
+.model-chip__name {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.model-chip__fallback-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(31, 138, 91, 0.1);
+  color: var(--ok);
+  border: 1px solid rgba(31, 138, 91, 0.2);
+  margin-left: 2px;
 }
 
 /* Evidence and Table Styles */

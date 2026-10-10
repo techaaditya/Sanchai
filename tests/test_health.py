@@ -17,4 +17,5 @@ def test_health_endpoint(client):
     assert "status" in data
     assert "model_backend" in data
     assert "model" in data
+    assert data.get("fallback_model") == "gemma4:e2b-it-qat"
     assert isinstance(data["services"], list)
