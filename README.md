@@ -267,6 +267,26 @@ Sanchai/
 
 ---
 
-## 📄 License & Safety Notice
+## 📄 Licensing & Research Citation
 
-Distributed under the **MIT License**. Clinical data concepts and evaluations are research prototypes designed to empower patient health agency and improve doctor communication. Authoritative ledger commits strictly require human-in-the-loop clinician approval.
+This project is licensed under a **dual-licensing framework** tailored for open-source clinical research:
+
+- **Software Codebase:** [Apache License, Version 2.0](LICENSE)
+- **Clinical Datasets, Ontologies & Benchmarks (`data/`, `eval/`):** [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE)
+- **Clinical Safety Gate:** Authoritative health ledger commits strictly require human-in-the-loop clinician approval. Sanchai is an academic research system and not a substitute for certified medical diagnosis or emergency treatment.
+
+### Citing Sanchai in Academic Research
+If you utilize Sanchai, the **Nepali Clinical Lexicon (300 concepts)**, or the **NepClinBench gold-standard evaluation dataset** in your scientific research, please cite:
+
+```bibtex
+@software{sapkota2026sanchai,
+  author       = {Aaditya Sapkota},
+  title        = {{Sanchai: A Zero-Hallucination Nepali Clinical Health Ledger \& Offline-First Multimodal AI Assistant}},
+  year         = {2026},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/techaaditya/Sanchai}},
+  note         = {Dataset: CC BY 4.0; Code: Apache 2.0}
+}
+```
+Academic reference managers (Zotero, Mendeley) can also directly import the repository metadata via [`CITATION.cff`](CITATION.cff).

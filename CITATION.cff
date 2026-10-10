@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use Sanchai, the Nepali Clinical Lexicon, or NepClinBench in your academic research, please cite this work as follows."
+title: "Sanchai: A Zero-Hallucination Nepali Clinical Health Ledger & Offline-First Multimodal AI Assistant"
+abstract: "A clinically grounded personal health ledger and evaluation pipeline engineered for Nepal's healthcare ecosystem. Features deterministic 3-tier clinical normalization across 300 concepts verified against Nepal DDA, NLEM 2021, and WHO ICD-11, dual-tier Google Gemma 4 AI, and offline-first Segno emergency optical QR triage."
+authors:
+  - family-names: "Sapkota"
+    given-names: "Aaditya"
+    orcid: ""
+date-released: 2026-10-10
+url: "https://github.com/techaaditya/Sanchai"
+repository-code: "https://github.com/techaaditya/Sanchai"
+license: "Apache-2.0"
+keywords:
+  - "clinical-nlp"
+  - "health-informatics"
+  - "nepali-language"
+  - "low-resource-nlp"
+  - "gemma-4"
+  - "zero-hallucination"
+  - "fhir-r4"
+  - "offline-first-health"
+  - "emergency-triage-qr"
+preferred-citation:
+  type: software
+  title: "Sanchai: A Zero-Hallucination Nepali Clinical Health Ledger & Offline-First Multimodal AI Assistant"
+  authors:
+    - family-names: "Sapkota"
+      given-names: "Aaditya"
+  year: 2026
+  url: "https://github.com/techaaditya/Sanchai"
