@@ -65,3 +65,10 @@ rebuild_docs/
 archive/
 *.zip
 rebuildandarchive.zip
+
+# Presentations & internal documentation (kept local only)
+CODE_AND_ARCHITECTURE_EXPLAINED.md
+PRESENTATION_AND_DEMO_SCRIPT.md
+PROJECT_DOCUMENTATION.md
+SANCHAI_PITCH_SLIDES.pdf
+scripts/generate_pitch_slides.py
