@@ -124,7 +124,7 @@ Open a terminal in the root directory `Sanchai`:
 # 1. Install backend Python dependencies
 pip install -r backend/requirements.txt
 
-# 2. Seed the clinical database (initializes data/sanchai.db with 261 concepts and 3 patients)
+# 2. Seed the clinical database (initializes data/sanchai.db with 300 concepts and 3 patients)
 python -m backend.seed
 ```
 
@@ -148,9 +148,11 @@ You should see:
   "service": "sanchai-api",
   "model_backend": "cloud",
   "model": "gemma4:31b-cloud",
+  "fallback_model": "gemma4:e2b-it-qat",
   "services": [
     { "service": "db", "status": "up" },
-    { "service": "gemma_model", "status": "up" }
+    { "service": "primary_model", "status": "up" },
+    { "service": "fallback_model", "status": "up" }
   ]
 }
 ```
@@ -214,32 +216,38 @@ Sanchai/
 ├── backend/
 │   ├── main.py                  # FastAPI application entrypoint & health probe
 │   ├── config.py                # Pydantic settings loading from .env
+│   ├── db.py                    # SQLite connection & schema migrations
 │   ├── schemas.py               # Pydantic v2 clinical request/response contracts
 │   ├── seed.py                  # Database initialization and demo patient seed
-│   ├── normalization/
-│   │   ├── engine.py            # 3-Tier normalization engine
-│   │   ├── matcher.py           # RapidFuzz & exact matcher
-│   │   └── guardrail.py         # Constrained Gemma 4 fallback
-│   ├── ingestion/
-│   │   ├── pipeline.py          # Multimodal ingestion orchestrator
-│   │   ├── ocr.py               # Vision OCR integration
-│   │   └── pdf.py               # PyMuPDF digital document extractor
+│   ├── ai/
+│   │   └── engine.py            # GemmaEngine (Cloud gemma4:31b + Local gemma4:e2b-it-qat fallback)
+│   ├── nlp/
+│   │   ├── lexicon.py           # In-memory clinical ontology index
+│   │   ├── normalize.py         # 3-Tier normalization orchestrator
+│   │   ├── tier1.py             # Exact multi-alias matching
+│   │   ├── tier2.py             # Matra & orthographic Levenshtein fuzzy matching
+│   │   └── tier3.py             # Gemma 4 constrained candidate selection
+│   ├── intake/
+│   │   ├── pipeline.py          # Multimodal intake orchestrator
+│   │   └── documents.py         # PyMuPDF digital document text extractor
 │   ├── record/
-│   │   ├── db.py                # SQLite database session & queries
+│   │   ├── entries.py           # Longitudinal ledger queries & active conditions
 │   │   ├── fhir.py              # HL7 FHIR R4 Collection Bundle generator
 │   │   ├── qr.py                # Segno high-contrast emergency QR generator
 │   │   └── pdf.py               # ReportLab Doctor Summary A4 PDF generator
 │   ├── routers/
 │   │   ├── intake.py            # Intake endpoints (text, image, pdf)
 │   │   ├── patients.py          # Patient ledger, approval gate, FHIR, PDF, QR
-│   │   └── eval.py              # NepClinBench evaluation endpoints
+│   │   ├── eval.py              # NepClinBench evaluation endpoints
+│   │   └── chatbot.py           # SanchAI EHR multimodal clinical assistant
 │   └── requirements.txt         # Python dependencies
 ├── data/
-│   ├── nepali_clinical_lexicon.json  # 261 curated bilingual clinical concepts
+│   ├── nepali_clinical_lexicon.json  # 300 curated bilingual clinical concepts
 │   └── nepclinbench_gold.json        # 60 gold-standard clinical evaluation cases
 ├── frontend/
 │   ├── app/
 │   │   ├── page.tsx             # Home dashboard
+│   │   ├── chatbot/page.tsx     # SanchAI EHR multimodal conversational assistant
 │   │   ├── intake/page.tsx      # Multimodal Intake Studio & Approval Gate
 │   │   ├── patients/[id]/       # Longitudinal patient ledger
 │   │   ├── scan/page.tsx        # Emergency QR Scanner
@@ -249,7 +257,7 @@ Sanchai/
 │   └── lib/
 │       ├── api.ts               # Dynamic API client with fallback base URL
 │       └── frontend-data.ts     # Server-side data fetching utilities
-├── tests/                       # 48 pytest test suites
+├── tests/                       # 54 pytest test suites
 ├── .env.example                 # Example configuration
 └── README.md                    # System documentation and execution guide
 ```
